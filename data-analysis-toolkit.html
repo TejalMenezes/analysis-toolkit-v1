@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Analysis Toolkit</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sidebar-bg:#0f1117;--sidebar-text:#a1a8bb;--sidebar-active:#fff;
+  --sidebar-accent:#6366f1;--sidebar-hover:rgba(255,255,255,0.06);
+  --bg:#f4f5f9;--surface:#ffffff;--surface2:#f0f1f7;--surface3:#e8eaf2;
+  --border:#e2e4ed;--border-strong:#cdd0de;
+  --text:#16192a;--text-secondary:#5a5f7d;--muted:#8b91aa;
+  --accent:#6366f1;--accent-hover:#4f46e5;--accent-light:#eef0ff;--accent-glow:rgba(99,102,241,0.15);
+  --green:#22c55e;--green-light:#dcfce7;--red:#ef4444;--red-light:#fee2e2;--amber:#f59e0b;--teal:#06b6d4;
+  --font:'DM Sans',sans-serif;--display:'Syne',sans-serif;--mono:'DM Mono',monospace;
+  --radius:10px;--radius-lg:14px;--radius-xl:18px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 4px 12px rgba(0,0,0,0.07),0 1px 3px rgba(0,0,0,0.05);
+  --shadow-lg:0 10px 30px rgba(0,0,0,0.10),0 4px 8px rgba(0,0,0,0.05);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;flex-shrink:0;z-index:20;box-shadow:var(--shadow-sm)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),#818cf8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;box-shadow:0 4px 10px rgba(99,102,241,0.35)}
+.logo-text{font-family:var(--display);font-size:17px;font-weight:700;letter-spacing:-0.3px;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0.2px}
+.header-right{display:flex;align-items:center;gap:10px}
+.team-badge{display:flex;gap:0;background:var(--surface2);border:1px solid var(--border);border-radius:24px;overflow:hidden;font-size:11.5px;color:var(--text-secondary)}
+.team-member{padding:5px 14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.team-member:last-child{border-right:none}
+.team-member::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;flex-shrink:0}
+.member-id{color:var(--muted);font-size:10.5px;margin-left:2px}
+
+/* PRINT DROPDOWN */
+.print-wrap{position:relative}
+.btn-print{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:13px;font-family:var(--font);color:var(--text);transition:all 0.15s;font-weight:500;box-shadow:var(--shadow-sm);white-space:nowrap;user-select:none}
+.btn-print:hover{background:var(--surface2);border-color:var(--border-strong);box-shadow:var(--shadow)}
+.print-caret{font-size:10px;margin-left:2px;opacity:0.6}
+.print-dropdown{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:200;min-width:220px;overflow:hidden}
+.print-dropdown.open{display:block}
+.print-opt{display:flex;align-items:flex-start;gap:10px;padding:11px 16px;cursor:pointer;transition:background 0.12s;border-bottom:1px solid var(--border)}
+.print-opt:last-child{border-bottom:none}
+.print-opt:hover{background:var(--surface2)}
+.print-opt-icon{width:28px;height:28px;background:var(--accent-light);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:14px;flex-shrink:0;margin-top:1px}
+.print-opt-text{flex:1}
+.print-opt-label{font-size:13px;font-weight:500;color:var(--text);line-height:1.3}
+.print-opt-sub{font-size:11px;color:var(--muted);margin-top:1px;line-height:1.4}
+
+/* NAV TOOLTIP — instant show, stays open while hovering */
+.nav-tooltip{position:fixed;left:228px;background:#1a1d2e;color:#e2e4ed;font-size:12px;line-height:1.55;padding:12px 14px;border-radius:10px;z-index:500;width:272px;pointer-events:auto;opacity:0;visibility:hidden;transition:opacity 0.15s,visibility 0.15s;box-shadow:0 8px 28px rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1)}
+.nav-tooltip.visible{opacity:1;visibility:visible}
+.nav-tooltip-title{font-family:var(--display);font-size:13px;font-weight:600;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.nav-tooltip-title i{color:#818cf8;font-size:14px;pointer-events:none;flex-shrink:0}
+.nav-tooltip-body{color:#a1a8bb;font-size:11.5px;line-height:1.65;margin-bottom:2px}
+.nav-tooltip-link{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:11.5px;color:#818cf8;text-decoration:none;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;width:100%;font-weight:500;transition:color 0.12s;cursor:pointer}
+.nav-tooltip-link:hover{color:#c7d2fe;text-decoration:underline}
+.nav-tooltip-link i{pointer-events:none}
+/* invisible bridge so mouse can travel from nav item to tooltip without gap-triggered hide */
+.nav-tooltip::before{content:'';position:absolute;left:-12px;top:0;width:12px;height:100%;background:transparent}
+/* prevent icon flicker: disable pointer-events on all icons inside nav items */
+.nav-item i{pointer-events:none}
+
+/* LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--sidebar-bg);overflow-y:auto;padding:20px 0;display:flex;flex-direction:column}
+.sidebar-section{padding:6px 20px 8px;font-size:9.5px;font-weight:600;color:rgba(255,255,255,0.28);letter-spacing:1.2px;text-transform:uppercase;margin-top:16px}
+.sidebar-section:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--sidebar-text);transition:all 0.15s;border-left:3px solid transparent;margin:1px 0;font-family:var(--font);font-weight:400}
+.nav-item:hover{background:var(--sidebar-hover);color:#fff}
+.nav-item.active{background:rgba(99,102,241,0.15);color:var(--sidebar-active);border-left:3px solid var(--sidebar-accent);font-weight:500}
+.nav-item i{font-size:16px;flex-shrink:0;opacity:0.85}
+.nav-item.active i{opacity:1}
+
+/* WIKI LINK in card titles */
+.wiki-link{color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border-bottom:1px dashed rgba(99,102,241,0.35);transition:border-color 0.15s,color 0.15s;padding-bottom:1px}
+.wiki-link:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.wiki-link:hover .wiki-icon{opacity:1;transform:translateX(1px)}
+.wiki-icon{font-size:11px;opacity:0;transition:opacity 0.15s,transform 0.15s;color:var(--accent);flex-shrink:0;pointer-events:none}
+
+/* APPLICABILITY FLAGS */
+.apply-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-left:8px;letter-spacing:0.2px;vertical-align:middle}
+.apply-ok{background:#dcfce7;color:#15803d;border:1px solid #86efac}
+.apply-warn{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+.apply-row{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:var(--radius);font-size:12.5px;margin-bottom:8px;flex-wrap:wrap}
+.apply-row-ok{background:#f0fdf4;border:1px solid #bbf7d0}
+.apply-row-warn{background:#fff7ed;border:1px solid #fed7aa}
+.apply-row-title{font-weight:600;color:var(--text);flex:1;min-width:120px}
+.apply-row-detail{font-size:11.5px;color:var(--text-secondary);flex-basis:100%;padding-top:2px}
+.assumptions-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px}
+.assumptions-title{font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.assumptions-title i{color:var(--accent);font-size:14px}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:20px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px;box-shadow:var(--shadow-sm)}
+.card-header{margin-bottom:20px}
+.card-title{font-family:var(--display);font-size:16px;font-weight:600;display:flex;align-items:center;gap:9px;color:var(--text);margin-bottom:5px}
+.card-title i{width:30px;height:30px;border-radius:8px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px}
+.card-desc{font-size:12.5px;color:var(--text-secondary);line-height:1.55}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+
+/* TABLE */
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+.data-table{border-collapse:collapse;width:100%;font-size:12px;font-family:var(--mono)}
+.data-table th{background:var(--surface2);border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:0;font-family:var(--font);font-weight:400;min-width:100px}
+.data-table td{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:0}
+.data-table tr:last-child td{border-bottom:none}
+.data-table th:last-child,.data-table td:last-child{border-right:none}
+.data-table tr:hover td{background:#fafbff}
+.col-header{padding:7px 10px 5px}
+.col-name{display:flex;align-items:center;gap:4px}
+.col-name input{border:none;background:transparent;font-family:var(--font);font-size:12.5px;font-weight:600;width:80px;outline:none;color:var(--text);padding:0}
+.col-type{display:flex;gap:3px;margin-top:3px}
+.type-btn{font-size:9px;padding:2px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--muted);transition:all 0.12s;font-weight:500}
+.type-btn.active-metric{background:#e0e7ff;color:#4338ca;border-color:#c7d2fe}
+.type-btn.active-ordinal{background:#fef9c3;color:#854d0e;border-color:#fde68a}
+.type-btn.active-nominal{background:#f3e8ff;color:#7e22ce;border-color:#d8b4fe}
+.data-table td input{width:100%;border:none;background:transparent;padding:6px 10px;font-family:var(--mono);font-size:12px;outline:none;color:var(--text)}
+.data-table td input:focus{background:var(--accent-light)}
+.row-num{background:var(--surface2);color:var(--muted);font-size:10.5px;padding:6px 10px;text-align:center;min-width:38px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:13px;font-family:var(--font);color:var(--text);transition:all 0.15s;font-weight:400;box-shadow:var(--shadow-sm)}
+.btn:hover{background:var(--surface2);border-color:var(--border-strong);transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 10px rgba(99,102,241,0.3)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover);box-shadow:0 6px 14px rgba(99,102,241,0.4)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-danger{color:var(--red);border-color:#fca5a5}
+.btn-danger:hover{background:var(--red-light);border-color:#f87171}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* FORM */
+select{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--surface);color:var(--text);outline:none;cursor:pointer;box-shadow:var(--shadow-sm)}
+select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+input[type="number"],input[type="text"]{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--surface);color:var(--text);outline:none;box-shadow:var(--shadow-sm)}
+input[type="number"]{width:110px}
+input[type="text"]{width:140px}
+input[type="number"]:focus,input[type="text"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+label{font-size:12px;color:var(--text-secondary);margin-bottom:5px;display:block;font-weight:500}
+
+/* STATS TABLE */
+.stats-table{width:100%;border-collapse:collapse;font-size:13px}
+.stats-table th{text-align:left;padding:9px 14px;background:var(--surface2);border-bottom:2px solid var(--border);font-weight:500;font-size:11.5px;color:var(--text-secondary)}
+.stats-table td{padding:9px 14px;border-bottom:1px solid var(--border)}
+.stats-table tr:last-child td{border-bottom:none}
+.stats-table tr:hover td{background:#fafbff}
+.stat-val{font-family:var(--mono);font-weight:500;color:var(--accent)}
+.tooltip-wrap{position:relative;display:inline-flex;align-items:center;gap:5px}
+.tip-icon{color:var(--muted);font-size:13px;cursor:help}
+.tip-text{display:none;position:absolute;left:22px;top:-4px;background:#1a1d2e;color:#e2e4ed;font-size:11px;padding:6px 10px;border-radius:8px;z-index:100;width:210px;white-space:normal;line-height:1.5;box-shadow:var(--shadow-lg)}
+.tip-icon:hover+.tip-text{display:block}
+
+/* FREQ TABLE */
+.freq-table{width:100%;border-collapse:collapse;font-size:13px}
+.freq-table th{text-align:left;padding:8px 14px;background:var(--surface2);border-bottom:2px solid var(--border);font-size:11.5px;font-weight:500;color:var(--text-secondary)}
+.freq-table td{padding:8px 14px;border-bottom:1px solid var(--border)}
+.freq-bar{height:6px;background:var(--surface3);border-radius:4px;overflow:hidden;margin-top:3px;width:100px}
+.freq-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#818cf8);border-radius:4px}
+
+/* CHARTS */
+.chart-wrap{position:relative;width:100%;height:280px}
+.chart-label{font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.chart-label::before{content:'';width:3px;height:12px;background:var(--accent);border-radius:2px;display:inline-block}
+
+/* HEATMAP */
+.heatmap-table{border-collapse:collapse;font-size:12px}
+.heatmap-table th{padding:7px 12px;font-weight:500;font-size:11px;color:var(--muted);text-align:center}
+.heatmap-table td{width:72px;height:48px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:500;border-radius:6px;transition:transform 0.15s}
+.heatmap-table td:hover{transform:scale(1.05)}
+
+/* EQ BOX */
+.eq-box{background:linear-gradient(135deg,var(--accent-light),#e0e7ff);border:1px solid #c7d2fe;border-radius:var(--radius);padding:14px 18px;font-family:var(--mono);font-size:14px;color:var(--accent);margin-bottom:14px;letter-spacing:0.3px}
+.r2-bar{height:10px;background:var(--surface3);border-radius:6px;overflow:hidden;margin-top:5px}
+.r2-fill{height:100%;background:linear-gradient(90deg,var(--accent),#818cf8);border-radius:6px;transition:width 0.5s ease}
+
+/* TEST RESULTS */
+.test-result{padding:16px 18px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface2);margin-top:14px}
+.test-stat{font-family:var(--mono);font-size:14px;font-weight:500;margin-bottom:8px;color:var(--text)}
+.interpret{font-size:13px;color:var(--text-secondary);line-height:1.55;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.p-sig{color:#16a34a;font-weight:600;background:var(--green-light);padding:1px 8px;border-radius:4px}
+.p-ns{color:#dc2626;font-weight:600;background:var(--red-light);padding:1px 8px;border-radius:4px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;letter-spacing:0.3px}
+.badge-metric{background:#e0e7ff;color:#4338ca}
+.badge-ordinal{background:#fef9c3;color:#854d0e}
+.badge-nominal{background:#f3e8ff;color:#7e22ce}
+
+/* LAYOUT HELPERS */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.form-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.empty-state{text-align:center;color:var(--muted);padding:48px;font-size:13px}
+.empty-state i{font-size:36px;display:block;margin-bottom:10px;opacity:0.35}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px}
+.metric-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 12px;text-align:center;transition:box-shadow 0.15s}
+.metric-card:hover{box-shadow:var(--shadow)}
+.metric-card .val{font-size:21px;font-weight:600;font-family:var(--display);color:var(--accent)}
+.metric-card .lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:0.6px;font-weight:500}
+
+/* TABS */
+.tabs{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:18px}
+.tab{padding:6px 16px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--text-secondary);transition:all 0.15s;font-weight:400}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--surface);color:var(--text);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,0.1)}
+
+/* INFO HINT */
+.hint-box{font-size:13px;color:var(--text-secondary);margin-bottom:14px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius);border-left:3px solid var(--accent)}
+
+/* CSV IMPORT MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-xl);padding:28px;width:540px;max-width:95vw;box-shadow:var(--shadow-lg);border:1px solid var(--border)}
+.modal-title{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.modal-desc{font-size:13px;color:var(--text-secondary);margin-bottom:18px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.import-textarea{width:100%;height:160px;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-family:var(--mono);font-size:12px;resize:vertical;outline:none;color:var(--text);background:var(--surface2)}
+.import-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);background:var(--surface)}
+.import-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.import-tab{flex:1;padding:7px;text-align:center;cursor:pointer;font-size:12px;color:var(--text-secondary);background:var(--surface2);transition:all 0.15s;font-weight:400;border-right:1px solid var(--border)}
+.import-tab:last-child{border-right:none}
+.import-tab.active{background:var(--accent);color:#fff;font-weight:500}
+.file-drop{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all 0.15s;color:var(--muted)}
+.file-drop:hover,.file-drop.drag-over{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+.file-drop i{font-size:32px;display:block;margin-bottom:10px;opacity:0.6}
+.file-drop input[type=file]{display:none}
+
+/* PRINT STYLES — current page only (default) */
+@media print{
+  .sidebar,.header,.print-wrap,.modal-overlay,.nav-tooltip{display:none!important}
+  .app{height:auto!important;overflow:visible!important}
+  .main{overflow:visible!important;display:block!important}
+  .content{overflow:visible!important;padding:10px!important;display:block!important}
+  .card{page-break-inside:avoid;box-shadow:none!important;border:1px solid #ccc!important;margin-bottom:16px}
+  .btn-row,.btn-print{display:none!important}
+  .chart-wrap{height:220px!important}
+}
+/* ALL-PAGES print mode */
+body.print-all .sidebar,body.print-all .header,body.print-all .print-wrap,body.print-all .nav-tooltip{display:none!important}
+body.print-all .app{height:auto!important;overflow:visible!important;display:block!important}
+body.print-all .main{display:block!important;overflow:visible!important}
+body.print-all #content{display:block!important;overflow:visible!important;padding:10px!important;height:auto!important}
+body.print-all .card{page-break-inside:avoid;box-shadow:none!important;border:1px solid #ccc!important;margin-bottom:16px!important}
+body.print-all .btn-row{display:none!important}
+body.print-all .chart-wrap{height:220px!important}
+body.print-all .all-pages-container{display:block!important}
+.all-pages-container{display:none}
+.print-page-section{margin-bottom:32px;padding-bottom:32px;border-bottom:2px solid #e2e4ed}
+.print-page-section:last-child{border-bottom:none}
+.print-section-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#16192a;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #6366f1;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-mark"><i class="ti ti-chart-dots" style="font-size:16px"></i></div>
+      <div>
+        <div class="logo-text">Data Analysis Toolkit</div>
+        <div class="logo-sub">Tools &amp; Methods of Data Analysis</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="team-badge">
+        <div class="team-member">Kavin Ganapathy <span class="member-id">100008820</span></div>
+        <div class="team-member">Keethana Kumbar <span class="member-id">100008764</span></div>
+        <div class="team-member">Syed Margoobul <span class="member-id">100008160</span></div>
+        <div class="team-member">Yasser Bouyaddid <span class="member-id">100008819</span></div>
+      </div>
+      <div class="print-wrap" id="print-wrap">
+        <button class="btn-print" id="btn-print-toggle" onclick="togglePrintDropdown()">
+          <i class="ti ti-printer" style="font-size:15px"></i> Print / PDF <span class="print-caret">▼</span>
+        </button>
+        <div class="print-dropdown" id="print-dropdown">
+          <div class="print-opt" onclick="printCurrentPage()">
+            <div class="print-opt-icon"><i class="ti ti-file"></i></div>
+            <div class="print-opt-text">
+              <div class="print-opt-label">Current page only</div>
+              <div class="print-opt-sub">Print just the page you're viewing right now</div>
+            </div>
+          </div>
+          <div class="print-opt" onclick="printAllPages()">
+            <div class="print-opt-icon"><i class="ti ti-files"></i></div>
+            <div class="print-opt-text">
+              <div class="print-opt-label">All pages &amp; graphs</div>
+              <div class="print-opt-sub">Render every section and print as a full report</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-section">Data</div>
+      <div class="nav-item active" data-page="data" data-tip="data"><i class="ti ti-table"></i> Data Table</div>
+      <div class="sidebar-section">Analysis</div>
+      <div class="nav-item" data-page="descriptive" data-tip="descriptive"><i class="ti ti-math"></i> Descriptive Stats</div>
+      <div class="nav-item" data-page="frequency" data-tip="frequency"><i class="ti ti-list-numbers"></i> Frequency Tables</div>
+      <div class="nav-item" data-page="charts" data-tip="charts"><i class="ti ti-chart-bar"></i> Charts</div>
+      <div class="nav-item" data-page="qqplot" data-tip="qqplot"><i class="ti ti-chart-line"></i> Q-Q Plot</div>
+      <div class="nav-item" data-page="correlation" data-tip="correlation"><i class="ti ti-grid-dots"></i> Correlation</div>
+      <div class="nav-item" data-page="regression" data-tip="regression"><i class="ti ti-trending-up"></i> Regression</div>
+      <div class="nav-item" data-page="hypothesis" data-tip="hypothesis"><i class="ti ti-flask"></i> Hypothesis Tests</div>
+      <div class="nav-item" data-page="ztest" data-tip="ztest"><i class="ti ti-math-function"></i> Z-Test</div>
+    </div>
+    <!-- Floating tooltip -->
+    <div class="nav-tooltip" id="nav-tooltip">
+      <div class="nav-tooltip-title" id="nav-tooltip-title"></div>
+      <div class="nav-tooltip-body" id="nav-tooltip-body"></div>
+      <a class="nav-tooltip-link" id="nav-tooltip-link" href="#" target="_blank" rel="noopener">
+        <i class="ti ti-external-link" style="font-size:11px"></i> Read more on Wikipedia
+      </a>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-file-import" style="color:var(--accent);font-size:20px"></i>Import Data</div>
+    <div class="modal-desc">Upload a CSV file or paste your data directly. First row should be column headers.</div>
+    <div class="import-tabs">
+      <div class="import-tab active" data-itab="paste" onclick="switchImportTab('paste')"><i class="ti ti-clipboard"></i> Paste Data</div>
+      <div class="import-tab" data-itab="csv" onclick="switchImportTab('csv')"><i class="ti ti-file-text"></i> Upload CSV</div>
+    </div>
+    <div id="import-paste-panel">
+      <label>Paste tab-separated or comma-separated data (with headers in first row):</label>
+      <textarea class="import-textarea" id="import-text" placeholder="Name&#9;Age&#9;Score&#10;Alice&#9;24&#9;85&#10;Bob&#9;31&#9;90"></textarea>
+    </div>
+    <div id="import-csv-panel" style="display:none">
+      <div class="file-drop" id="file-drop" onclick="document.getElementById('file-input').click()">
+        <i class="ti ti-upload"></i>
+        <div style="font-size:14px;font-weight:500;margin-bottom:4px">Click to choose a CSV file</div>
+        <div style="font-size:12px">or drag and drop here</div>
+        <input type="file" id="file-input" accept=".csv,.tsv,.txt">
+      </div>
+      <div id="file-name" style="margin-top:8px;font-size:12px;color:var(--text-secondary)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeImportModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="doImport()"><i class="ti ti-check"></i> Import</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLE_COLUMNS=[{name:'Age',type:'metric'},{name:'Income',type:'metric'},{name:'Gender',type:'nominal'},{name:'Education',type:'ordinal'},{name:'Satisfaction',type:'ordinal'}];
+const SAMPLE_DATA=[[24,28500,'Female','Bachelor',4],[31,45200,'Male','Master',5],[27,32000,'Female','Bachelor',3],[45,72000,'Male','PhD',4],[38,55000,'Female','Master',5],[29,31000,'Other','High School',2],[52,88000,'Male','PhD',5],[34,42000,'Female','Bachelor',3],[26,27500,'Male','High School',2],[41,63000,'Female','Master',4],[23,22000,'Male','No Degree',1],[48,79000,'Female','PhD',5],[35,50000,'Male','Bachelor',4],[30,38000,'Female','Bachelor',3],[55,95000,'Male','PhD',5],[28,29000,'Other','High School',3],[43,68000,'Female','Master',4],[22,21000,'Male','No Degree',2],[37,57000,'Female','Master',5],[50,82000,'Male','PhD',4]];
+
+let columns=JSON.parse(JSON.stringify(SAMPLE_COLUMNS));
+let tableData=SAMPLE_DATA.map(r=>[...r]);
+let currentPage='data';
+let charts={};
+let importMode='paste';
+let pendingFileText='';
+
+/* ── MATH HELPERS ── */
+function getColData(i){return tableData.map(r=>r[i]);}
+function getNumeric(i){return getColData(i).map(v=>parseFloat(v)).filter(v=>!isNaN(v));}
+function mean(a){return a.reduce((s,v)=>s+v,0)/a.length;}
+function median(a){const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function mode(a){const f={};a.forEach(v=>{f[v]=(f[v]||0)+1;});const mx=Math.max(...Object.values(f));return Object.keys(f).filter(k=>f[k]===mx).map(Number).join(', ');}
+function variance(a){const m=mean(a);return a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1);}
+function std(a){return Math.sqrt(variance(a));}
+function percentile(a,p){const s=[...a].sort((x,y)=>x-y);const i=(p/100)*(s.length-1);const l=Math.floor(i);const u=Math.ceil(i);return s[l]+(s[u]-s[l])*(i-l);}
+function skewness(a){const n=a.length,m=mean(a),s=std(a);return(n/((n-1)*(n-2)))*a.reduce((acc,v)=>acc+((v-m)/s)**3,0);}
+function kurtosis(a){const n=a.length,m=mean(a),s=std(a);return a.reduce((acc,v)=>acc+((v-m)/s)**4,0)/n-3;}
+function pearson(x,y){const mx=mean(x),my=mean(y),sx=std(x),sy=std(y);return x.reduce((a,v,i)=>a+(v-mx)*(y[i]-my),0)/((x.length-1)*sx*sy);}
+function spearman(x,y){const rank=arr=>{const s=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);const r=new Array(arr.length);s.forEach((v,i)=>{r[v.i]=i+1;});return r;};return pearson(rank(x),rank(y));}
+function lnGamma(x){const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,1.208650973866179e-3,-5.395239384953e-6];let y=x,tmp=x+5.5;tmp-=(x+0.5)*Math.log(tmp);let ser=1.000000000190015;for(let i=0;i<6;i++)ser+=c[i]/++y;return -tmp+Math.log(2.5066282746310005*ser/x);}
+function betaCF(a,b,x){const MAX=200,EPS=3e-7;let c=1,d=1-(a+b)*x/(a+1);if(Math.abs(d)<1e-30)d=1e-30;d=1/d;let h=d;for(let m=1;m<=MAX;m++){let m2=2*m,aa=m*(b-m)*x/((a-1+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;h*=d*c;aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+1+m2));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;let del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;}return h;}
+function incompleteBeta(a,b,x){let bt=Math.exp(lnGamma(a+b)-lnGamma(a)-lnGamma(b)+a*Math.log(x)+b*Math.log(1-x));if(x<(a+1)/(a+b+2))return bt*betaCF(a,b,x)/a;return 1-bt*betaCF(b,a,1-x)/b;}
+function tPValue(t,df){return 2*(1-0.5*(1+Math.sign(t)*(1-incompleteBeta(df/2,0.5,df/(df+t*t)))));}
+function chiSquareP(chi2,df){function gammaInc(a,x){let s=0,term=1/a;for(let i=0;i<200;i++){term*=x/(a+i+1);s+=term;if(term<1e-10)break;}return Math.exp(-x+a*Math.log(x)-lnGamma(a))*(1/a+s);}return 1-gammaInc(df/2,chi2/2);}
+function zPValue(z){const absZ=Math.abs(z);const t=1/(1+0.2316419*absZ);const poly=t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));const pdf=Math.exp(-0.5*absZ*absZ)/Math.sqrt(2*Math.PI);return Math.min(1,2*pdf*poly);}
+function fmt(n,d=3){if(typeof n!=='number'||isNaN(n))return'—';return n.toFixed(d);}
+function fmtP(p){if(p<0.001)return'p < 0.001';return'p = '+fmt(p,3);}
+
+/* Normal quantile (probit) approximation */
+function normInv(p){
+  if(p<=0)return-Infinity;if(p>=1)return Infinity;
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pLow=0.02425,pHigh=1-pLow;
+  let q;
+  if(p<pLow){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/(((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1));}
+  if(p<=pHigh){q=p-0.5;const r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/(((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1));
+}
+
+/* ── IMPORT MODAL ── */
+function openImportModal(){document.getElementById('import-modal').classList.add('open');}
+function closeImportModal(){document.getElementById('import-modal').classList.remove('open');document.getElementById('import-text').value='';document.getElementById('file-name').textContent='';pendingFileText='';}
+function switchImportTab(tab){
+  importMode=tab;
+  document.querySelectorAll('.import-tab').forEach(t=>t.classList.toggle('active',t.dataset.itab===tab));
+  document.getElementById('import-paste-panel').style.display=tab==='paste'?'':'none';
+  document.getElementById('import-csv-panel').style.display=tab==='csv'?'':'none';
+}
+function parseDelimited(text){
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)return null;
+  const sep=lines[0].includes('\t')?'\t':',';
+  return lines.map(l=>l.split(sep).map(v=>v.trim().replace(/^"|"$/g,'')));
+}
+function doImport(){
+  let raw;
+  if(importMode==='paste'){raw=document.getElementById('import-text').value.trim();}
+  else{raw=pendingFileText;}
+  if(!raw){alert('No data to import.');return;}
+  const rows=parseDelimited(raw);
+  if(!rows||rows.length<2){alert('Could not parse data. Make sure you have headers in row 1 and at least one data row.');return;}
+  const headers=rows[0];
+  const dataRows=rows.slice(1);
+  columns=headers.map(h=>({name:h,type:isNaN(parseFloat(dataRows[0][headers.indexOf(h)]))?'nominal':'metric'}));
+  tableData=dataRows.map(r=>r.map((v,i)=>isNaN(parseFloat(v))?v:parseFloat(v)));
+  closeImportModal();
+  currentPage='data';
+  renderPage();
+}
+// File drop
+document.addEventListener('DOMContentLoaded',()=>{
+  const drop=document.getElementById('file-drop');
+  const fi=document.getElementById('file-input');
+  fi.addEventListener('change',e=>{const f=e.target.files[0];if(f)readFile(f);});
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag-over');});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('drag-over'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)readFile(f);});
+});
+function readFile(f){
+  const r=new FileReader();
+  r.onload=e=>{pendingFileText=e.target.result;document.getElementById('file-name').textContent='✓ '+f.name+' ('+Math.round(f.size/1024)+' KB)';};
+  r.readAsText(f);
+}
+
+/* ── RENDER PAGE ── */
+function renderPage(){
+  const content=document.getElementById('content');
+  document.querySelectorAll('.nav-item').forEach(el=>{el.classList.toggle('active',el.dataset.page===currentPage);});
+  destroyCharts();
+  if(currentPage==='data')content.innerHTML=renderData();
+  else if(currentPage==='descriptive')content.innerHTML=renderDescriptive();
+  else if(currentPage==='frequency')content.innerHTML=renderFrequency();
+  else if(currentPage==='charts')content.innerHTML=renderCharts();
+  else if(currentPage==='qqplot')content.innerHTML=renderQQPlot();
+  else if(currentPage==='correlation')content.innerHTML=renderCorrelation();
+  else if(currentPage==='regression')content.innerHTML=renderRegression();
+  else if(currentPage==='hypothesis')content.innerHTML=renderHypothesis();
+  else if(currentPage==='ztest')content.innerHTML=renderZTest();
+  bindEvents();
+  if(currentPage==='charts')drawCharts();
+  if(currentPage==='regression')drawRegression();
+  if(currentPage==='qqplot')drawQQPlots();
+}
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};}
+
+/* ── DATA TABLE ── */
+function renderData(){
+  let thRow='<th style="min-width:38px"><div class="col-header" style="color:var(--muted);font-size:11px">#</div></th>';
+  columns.forEach((col,i)=>{
+    thRow+=`<th><div class="col-header"><div class="col-name"><input value="${col.name}" data-colidx="${i}" class="col-name-input"></div><div class="col-type">
+      <button class="type-btn ${col.type==='metric'?'active-metric':''}" data-colidx="${i}" data-type="metric">M</button>
+      <button class="type-btn ${col.type==='ordinal'?'active-ordinal':''}" data-colidx="${i}" data-type="ordinal">O</button>
+      <button class="type-btn ${col.type==='nominal'?'active-nominal':''}" data-colidx="${i}" data-type="nominal">N</button>
+    </div></div></th>`;
+  });
+  let rows=tableData.map((row,ri)=>`<tr><td class="row-num">${ri+1}</td>${row.map((cell,ci)=>`<td><input value="${cell}" data-row="${ri}" data-col="${ci}" class="cell-input"></td>`).join('')}</tr>`).join('');
+  return`<div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-table"></i>Data Table</div>
+      <div class="card-desc">Enter data manually, paste from Excel (tab-separated), or import a CSV file. Column types: <span class="badge badge-metric">M</span>etric &nbsp;<span class="badge badge-ordinal">O</span>rdinal &nbsp;<span class="badge badge-nominal">N</span>ominal.</div>
+    </div>
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn btn-primary btn-sm" onclick="openImportModal()"><i class="ti ti-file-import"></i> Import CSV / Paste</button>
+      <button class="btn btn-sm" id="btn-sample"><i class="ti ti-download"></i> Load Sample Data</button>
+      <button class="btn btn-sm" id="btn-addrow"><i class="ti ti-plus"></i> Add Row</button>
+      <button class="btn btn-sm" id="btn-addcol"><i class="ti ti-plus"></i> Add Column</button>
+      <button class="btn btn-sm btn-danger" id="btn-clear"><i class="ti ti-trash"></i> Clear Table</button>
+    </div>
+    <div class="table-wrap"><table class="data-table"><thead><tr>${thRow}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+      <i class="ti ti-info-circle" style="font-size:13px"></i>
+      ${tableData.length} rows × ${columns.length} columns &nbsp;·&nbsp; You can also paste Excel data directly into this table.
+    </div>
+  </div>`;
+}
+
+/* ── DESCRIPTIVE STATS ── */
+function renderDescriptive(){
+  const metricCols=columns.filter(c=>c.type==='metric');
+  if(!metricCols.length)return`<div class="card"><div class="empty-state"><i class="ti ti-math"></i>No metric columns found.</div></div>`;
+  const stats=[
+    {key:'n',label:'N (Count)',tip:'Total number of valid observations'},
+    {key:'mean',label:'Mean',tip:'Arithmetic average: sum of all values divided by n'},
+    {key:'median',label:'Median',tip:'Middle value when sorted; robust to outliers'},
+    {key:'mode',label:'Mode',tip:'Most frequently occurring value(s)'},
+    {key:'var',label:'Variance (s²)',tip:'Average squared deviation from the mean (sample, n−1)'},
+    {key:'std',label:'Std Deviation (s)',tip:'Typical distance of values from the mean'},
+    {key:'min',label:'Minimum',tip:'Smallest observed value'},
+    {key:'max',label:'Maximum',tip:'Largest observed value'},
+    {key:'range',label:'Range',tip:'Difference between maximum and minimum'},
+    {key:'q1',label:'Q1 (25th pct)',tip:'First quartile: 25% of values fall below this'},
+    {key:'q3',label:'Q3 (75th pct)',tip:'Third quartile: 75% of values fall below this'},
+    {key:'iqr',label:'IQR',tip:'Q3 − Q1; contains the middle 50% of the data'},
+    {key:'skew',label:'Skewness',tip:'Asymmetry: 0=symmetric, >0=right tail, <0=left tail'},
+    {key:'kurt',label:'Kurtosis',tip:'Excess kurtosis vs. normal; 0=normal-like tails'},
+  ];
+  const computed=metricCols.map(col=>{
+    const idx=columns.indexOf(col);const d=getNumeric(idx);
+    if(!d.length)return{name:col.name,data:{}};
+    const q1=percentile(d,25),q3=percentile(d,75);
+    return{name:col.name,data:{n:d.length,mean:fmt(mean(d),2),median:fmt(median(d),2),mode:mode(d),var:fmt(variance(d),2),std:fmt(std(d),2),min:fmt(Math.min(...d),2),max:fmt(Math.max(...d),2),range:fmt(Math.max(...d)-Math.min(...d),2),q1:fmt(q1,2),q3:fmt(q3,2),iqr:fmt(q3-q1,2),skew:fmt(skewness(d),3),kurt:fmt(kurtosis(d),3)}};
+  });
+  const thead=`<th style="background:var(--surface2)">Statistic</th>${computed.map(c=>`<th style="background:var(--surface2)">${c.name}</th>`).join('')}`;
+  const tbody=stats.map(s=>`<tr><td><div class="tooltip-wrap">${s.label}<i class="ti ti-info-circle tip-icon"></i><div class="tip-text">${s.tip}</div></div></td>${computed.map(c=>`<td class="stat-val">${c.data[s.key]??'—'}</td>`).join('')}</tr>`).join('');
+  return`<div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-math"></i><a href="https://en.wikipedia.org/wiki/Descriptive_statistics" target="_blank" rel="noopener" class="wiki-link">Descriptive Statistics<i class="ti ti-external-link wiki-icon"></i></a></div>
+      <div class="card-desc">Summary statistics for all metric variables. Hover ℹ for explanations.</div>
+    </div>
+    <div class="table-wrap"><table class="stats-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>
+  </div>`;
+}
+
+/* ── FREQUENCY ── */
+function renderFrequency(){
+  const catCols=columns.filter(c=>c.type==='nominal'||c.type==='ordinal');
+  const metCols=columns.filter(c=>c.type==='metric');
+  let html='';
+  catCols.forEach(col=>{
+    const idx=columns.indexOf(col);
+    const data=getColData(idx).filter(v=>v!==''&&v!==null&&v!==undefined);
+    const freq={};data.forEach(v=>{freq[v]=(freq[v]||0)+1;});
+    const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+    const total=data.length;let cum=0;
+    const rows=sorted.map(([val,count])=>{const rel=(count/total*100).toFixed(1);cum+=count;const cumPct=(cum/total*100).toFixed(1);
+      return`<tr><td>${val}</td><td><div>${count}</div><div class="freq-bar"><div class="freq-bar-fill" style="width:${count/sorted[0][1]*100}%"></div></div></td><td>${rel}%</td><td>${cumPct}%</td></tr>`;
+    }).join('');
+    html+=`<div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-list-numbers"></i>${col.name} <span class="badge ${col.type==='ordinal'?'badge-ordinal':'badge-nominal'}" style="font-size:10px">${col.type}</span></div></div>
+      <div class="table-wrap"><table class="freq-table"><thead><tr><th>Value</th><th>Abs. Frequency</th><th>Rel. Frequency</th><th>Cumulative %</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">n = ${total} valid observations</div></div>`;
+  });
+  metCols.forEach(col=>{
+    const idx=columns.indexOf(col);const data=getNumeric(idx);if(!data.length)return;
+    const bins=5;const mn=Math.min(...data),mx=Math.max(...data),bw=(mx-mn)/bins||1;
+    const binsArr=Array.from({length:bins},(_,i)=>({lo:mn+i*bw,hi:mn+(i+1)*bw,count:0}));
+    data.forEach(v=>{const b=Math.min(Math.floor((v-mn)/bw),bins-1);binsArr[b].count++;});
+    const total=data.length;let cum=0;
+    const rows=binsArr.map(b=>{const rel=(b.count/total*100).toFixed(1);cum+=b.count;const cumPct=(cum/total*100).toFixed(1);
+      return`<tr><td>[${b.lo.toFixed(1)}, ${b.hi.toFixed(1)})</td><td><div>${b.count}</div><div class="freq-bar"><div class="freq-bar-fill" style="width:${b.count/Math.max(...binsArr.map(x=>x.count))*100||0}%"></div></div></td><td>${rel}%</td><td>${cumPct}%</td></tr>`;
+    }).join('');
+    html+=`<div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-list-numbers"></i>${col.name} — Grouped Frequency <span class="badge badge-metric" style="font-size:10px">metric</span></div></div>
+      <div class="table-wrap"><table class="freq-table"><thead><tr><th>Interval</th><th>Abs. Frequency</th><th>Rel. Frequency</th><th>Cumulative %</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  });
+  if(!html)return`<div class="card"><div class="empty-state"><i class="ti ti-list-numbers"></i>No columns found.</div></div>`;
+  return html;
+}
+
+/* ── CHARTS ── */
+function renderCharts(){
+  const metCols=columns.filter(c=>c.type==='metric');
+  const catCols=columns.filter(c=>c.type!=='metric');
+  let selectors='';
+  if(metCols.length)selectors+=`<div class="form-group"><label>Metric variable</label><select id="chart-metric-col">${metCols.map(c=>`<option value="${columns.indexOf(c)}">${c.name}</option>`).join('')}</select></div>`;
+  if(metCols.length>=2)selectors+=`<div class="form-group"><label>Second metric (scatter Y)</label><select id="chart-metric-col2">${metCols.map(c=>`<option value="${columns.indexOf(c)}">${c.name}</option>`).join('')}</select></div>`;
+  if(catCols.length)selectors+=`<div class="form-group"><label>Categorical variable</label><select id="chart-cat-col">${catCols.map(c=>`<option value="${columns.indexOf(c)}">${c.name}</option>`).join('')}</select></div>`;
+  return`<div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-chart-bar"></i><a href="https://en.wikipedia.org/wiki/Chart" target="_blank" rel="noopener" class="wiki-link">Charts &amp; Visualizations<i class="ti ti-external-link wiki-icon"></i></a></div><div class="card-desc">Visual exploration of your data.</div></div>
+    <div class="form-row">${selectors}</div>
+    <div class="grid2">
+      <div><div class="chart-label">Histogram</div><div class="chart-wrap"><canvas id="chart-hist"></canvas></div></div>
+      <div><div class="chart-label">Bar Chart (Categorical)</div><div class="chart-wrap"><canvas id="chart-bar"></canvas></div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="grid2">
+      <div><div class="chart-label">Box Plot</div><div class="chart-wrap"><canvas id="chart-box"></canvas></div></div>
+      <div><div class="chart-label">Scatter Plot</div><div class="chart-wrap"><canvas id="chart-scatter"></canvas></div></div>
+    </div>
+  </div>`;
+}
+function drawCharts(){
+  const metSel=document.getElementById('chart-metric-col');
+  const metSel2=document.getElementById('chart-metric-col2');
+  const catSel=document.getElementById('chart-cat-col');
+  if(metSel)metSel.addEventListener('change',()=>{destroyCharts();drawCharts();});
+  if(metSel2)metSel2.addEventListener('change',()=>{destroyCharts();drawCharts();});
+  if(catSel)catSel.addEventListener('change',()=>{destroyCharts();drawCharts();});
+  const BLUE='#6366f1',BLUE_L='rgba(99,102,241,0.12)',TEAL='#06b6d4';
+  const PAL=['#6366f1','#06b6d4','#22c55e','#f59e0b','#ef4444','#8b5cf6'];
+  const gC='rgba(0,0,0,0.04)';
+  if(metSel){
+    const ci=parseInt(metSel.value);const data=getNumeric(ci);const colName=columns[ci].name;
+    if(data.length){
+      const bins=8;const mn=Math.min(...data),mx=Math.max(...data),bw=(mx-mn)/bins||1;
+      const cnts=Array(bins).fill(0);data.forEach(v=>{cnts[Math.min(Math.floor((v-mn)/bw),bins-1)]++;});
+      const labels=Array.from({length:bins},(_,i)=>(mn+i*bw).toFixed(0)+'-'+(mn+(i+1)*bw).toFixed(0));
+      charts.hist=new Chart(document.getElementById('chart-hist'),{type:'bar',data:{labels,datasets:[{label:colName,data:cnts,backgroundColor:BLUE_L,borderColor:BLUE,borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:gC}},x:{grid:{display:false}}}}});
+    }
+    const d=data;const q1=percentile(d,25),q3=percentile(d,75),mn2=Math.min(...d),mx2=Math.max(...d);
+    charts.box=new Chart(document.getElementById('chart-box'),{type:'bar',data:{labels:[colName],datasets:[
+      {label:'Base',data:[q1-mn2],backgroundColor:'transparent',borderColor:'transparent',stack:'box'},
+      {label:'IQR',data:[q3-q1],backgroundColor:BLUE_L,borderColor:BLUE,borderWidth:1.5,borderSkipped:false,borderRadius:4,stack:'box'},
+      {label:'Top',data:[mx2-q3],backgroundColor:'transparent',borderColor:'transparent',stack:'box'},
+    ]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:()=>[`Min: ${mn2.toFixed(1)}`,`Q1: ${q1.toFixed(1)}`,`Median: ${percentile(d,50).toFixed(1)}`,`Q3: ${q3.toFixed(1)}`,`Max: ${mx2.toFixed(1)}`]}}},scales:{x:{stacked:true,grid:{color:gC}},y:{stacked:true,grid:{display:false}}}}});
+  }
+  if(catSel){
+    const ci=parseInt(catSel.value);const data=getColData(ci).filter(v=>v!=='');
+    const freq={};data.forEach(v=>{freq[v]=(freq[v]||0)+1;});
+    const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+    charts.bar=new Chart(document.getElementById('chart-bar'),{type:'bar',data:{labels:sorted.map(v=>v[0]),datasets:[{label:columns[ci].name,data:sorted.map(v=>v[1]),backgroundColor:sorted.map((_,i)=>PAL[i%PAL.length]+'28'),borderColor:sorted.map((_,i)=>PAL[i%PAL.length]),borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:gC}},x:{grid:{display:false}}}}});
+  }
+  if(metSel&&metSel2){
+    const ci=parseInt(metSel.value),ci2=parseInt(metSel2.value);
+    const pairs=tableData.map(r=>[parseFloat(r[ci]),parseFloat(r[ci2])]).filter(([a,b])=>!isNaN(a)&&!isNaN(b));
+    charts.scatter=new Chart(document.getElementById('chart-scatter'),{type:'scatter',data:{datasets:[{label:`${columns[ci].name} vs ${columns[ci2].name}`,data:pairs.map(([x,y])=>({x,y})),backgroundColor:TEAL+'66',borderColor:TEAL,borderWidth:1,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:columns[ci].name,font:{size:11}},grid:{color:gC}},y:{title:{display:true,text:columns[ci2].name,font:{size:11}},grid:{color:gC}}}}});
+  }
+}
+
+/* ── Q-Q PLOT ── */
+function renderQQPlot(){
+  const metCols=columns.filter(c=>c.type==='metric');
+  if(!metCols.length)return`<div class="card"><div class="empty-state"><i class="ti ti-chart-line"></i>No metric columns found.</div></div>`;
+  const sel=`<select id="qq-col">${metCols.map(c=>`<option value="${columns.indexOf(c)}">${c.name}</option>`).join('')}</select>`;
+  return`<div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-chart-line"></i><a href="https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot" target="_blank" rel="noopener" class="wiki-link">Q-Q Plot (Normal)<i class="ti ti-external-link wiki-icon"></i></a></div>
+      <div class="card-desc">A quantile-quantile plot compares your data's distribution against a theoretical normal distribution. Points close to the diagonal line suggest normality.</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Variable</label>${sel}</div>
+      <button class="btn btn-primary btn-sm" id="btn-qq"><i class="ti ti-refresh"></i> Draw Q-Q Plot</button>
+    </div>
+    <div id="qq-stats" style="margin-bottom:14px"></div>
+    <div class="grid2">
+      <div><div class="chart-label">Q-Q Plot</div><div class="chart-wrap" style="height:300px"><canvas id="chart-qq"></canvas></div></div>
+      <div><div class="chart-label">Histogram with Normal Curve</div><div class="chart-wrap" style="height:300px"><canvas id="chart-qq-hist"></canvas></div></div>
+    </div>
+  </div>`;
+}
+function drawQQPlots(){
+  const btn=document.getElementById('btn-qq');
+  const sel=document.getElementById('qq-col');
+  if(btn)btn.addEventListener('click',()=>runQQ());
+  if(sel)sel.addEventListener('change',()=>runQQ());
+  runQQ();
+}
+function runQQ(){
+  if(charts.qq){charts.qq.destroy();delete charts.qq;}
+  if(charts.qqhist){charts.qqhist.destroy();delete charts.qqhist;}
+  const ci=parseInt(document.getElementById('qq-col').value);
+  const raw=getNumeric(ci);
+  if(raw.length<3){document.getElementById('qq-stats').innerHTML=`<div class="hint-box">Need at least 3 data points.</div>`;return;}
+  const d=[...raw].sort((a,b)=>a-b);
+  const n=d.length;
+  const m=mean(d),s=std(d);
+  // Theoretical quantiles using Blom formula: (i - 3/8)/(n + 1/4)
+  const pts=d.map((v,i)=>{const p=(i+1-0.375)/(n+0.25);return{x:normInv(p),y:v};});
+  // Reference line through Q1 and Q3
+  const q1=percentile(d,25),q3=percentile(d,75);
+  const tq1=normInv(0.25),tq3=normInv(0.75);
+  const slope=(q3-q1)/(tq3-tq1);
+  const intercept=q1-slope*tq1;
+  const xMin=pts[0].x-0.5,xMax=pts[n-1].x+0.5;
+  const refLine=[{x:xMin,y:intercept+slope*xMin},{x:xMax,y:intercept+slope*xMax}];
+
+  // Shapiro-Wilk approximation (W statistic estimate)
+  const swW=pearson(pts.map(p=>p.x),pts.map(p=>p.y));
+  const skew=fmt(skewness(d),3);
+  const kurt=fmt(kurtosis(d),3);
+
+  document.getElementById('qq-stats').innerHTML=`
+    <div class="metric-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="metric-card"><div class="val">${n}</div><div class="lbl">N</div></div>
+      <div class="metric-card"><div class="val">${fmt(swW,4)}</div><div class="lbl">Correlation (W proxy)</div></div>
+      <div class="metric-card"><div class="val">${skew}</div><div class="lbl">Skewness</div></div>
+      <div class="metric-card"><div class="val">${kurt}</div><div class="lbl">Excess Kurtosis</div></div>
+    </div>
+    <div class="hint-box" style="margin-top:0">
+      <strong>Interpretation:</strong> W proxy ≈ ${fmt(swW,3)} — ${swW>0.95?'Points closely follow the line, suggesting approximate normality.':swW>0.90?'Moderate deviation from normality detected.':'Significant departure from normality. Consider transformations.'} 
+      Skewness ${skew} ${Math.abs(parseFloat(skew))<0.5?'(approximately symmetric)':parseFloat(skew)>0?'(right-skewed)':'(left-skewed)'}.
+    </div>`;
+
+  const gC='rgba(0,0,0,0.04)';
+  charts.qq=new Chart(document.getElementById('chart-qq'),{
+    type:'scatter',
+    data:{datasets:[
+      {label:'Data quantiles',data:pts,backgroundColor:'rgba(99,102,241,0.5)',borderColor:'#6366f1',pointRadius:5,pointHoverRadius:7,borderWidth:1},
+      {label:'Reference line',data:refLine,type:'line',borderColor:'#ef4444',borderWidth:2,pointRadius:0,fill:false,tension:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:14}}},scales:{x:{title:{display:true,text:'Theoretical Quantiles (Normal)',font:{size:11}},grid:{color:gC}},y:{title:{display:true,text:'Sample Quantiles',font:{size:11}},grid:{color:gC}}}}
+  });
+
+  // Histogram with normal overlay
+  const bins=Math.max(5,Math.round(Math.sqrt(n)));
+  const mn2=Math.min(...d),mx2=Math.max(...d),bw=(mx2-mn2)/bins||1;
+  const cnts=Array(bins).fill(0);
+  d.forEach(v=>{cnts[Math.min(Math.floor((v-mn2)/bw),bins-1)]++;});
+  const labels=Array.from({length:bins},(_,i)=>((mn2+i*bw+mn2+(i+1)*bw)/2).toFixed(1));
+  // Normal curve values scaled to histogram
+  const normVals=labels.map(x=>n*bw*(1/(s*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((parseFloat(x)-m)/s)**2));
+  charts.qqhist=new Chart(document.getElementById('chart-qq-hist'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Observed',data:cnts,backgroundColor:'rgba(99,102,241,0.15)',borderColor:'#6366f1',borderWidth:1.5,borderRadius:3},
+      {label:'Normal curve',data:normVals,type:'line',borderColor:'#ef4444',borderWidth:2,pointRadius:0,fill:false,tension:0.4,yAxisID:'y'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:14}}},scales:{y:{beginAtZero:true,grid:{color:gC},title:{display:true,text:'Count',font:{size:11}}},x:{grid:{display:false}}}}
+  });
+}
+
+/* ── CORRELATION ── */
+function renderCorrelation(){
+  const cols=columns.filter(c=>c.type==='metric'||c.type==='ordinal');
+  if(cols.length<2)return`<div class="card"><div class="empty-state"><i class="ti ti-grid-dots"></i>Need at least 2 metric or ordinal columns.</div></div>`;
+  const n=cols.length;
+  const matrix=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>{
+    const a=getNumeric(columns.indexOf(cols[i])),b=getNumeric(columns.indexOf(cols[j]));
+    if(a.length<2||b.length<2)return NaN;
+    const ml=Math.min(a.length,b.length);const at=a.slice(0,ml),bt=b.slice(0,ml);
+    return cols[i].type==='ordinal'||cols[j].type==='ordinal'?spearman(at,bt):pearson(at,bt);
+  }));
+  function corrColor(v){if(isNaN(v))return'#f0f2f6';const abs=Math.abs(v);if(v>0)return`rgba(99,102,241,${0.1+abs*0.8})`;return`rgba(239,68,68,${0.1+abs*0.8})`;}
+  function corrText(v){if(isNaN(v)||Math.abs(v)<0.3)return'#1a1d23';return'#fff';}
+  const thead=`<th></th>${cols.map(c=>`<th style="text-align:center;padding:6px;font-size:11px;color:var(--muted);font-weight:500">${c.name}</th>`).join('')}`;
+  const tbody=matrix.map((row,i)=>`<tr><th style="padding:6px 12px;font-size:11px;color:var(--muted);font-weight:500;text-align:right">${cols[i].name}</th>${row.map(v=>`<td style="background:${corrColor(v)};color:${corrText(v)};text-align:center;padding:10px 8px;font-family:var(--mono);font-size:12px;font-weight:500;border-radius:6px">${isNaN(v)?'—':v.toFixed(2)}</td>`).join('')}</tr>`).join('');
+  return`<div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-grid-dots"></i><a href="https://en.wikipedia.org/wiki/Correlation" target="_blank" rel="noopener" class="wiki-link">Correlation Matrix<i class="ti ti-external-link wiki-icon"></i></a></div><div class="card-desc">Pearson (metric) and Spearman (ordinal). Range −1 to +1.</div></div>
+    <div style="overflow:auto"><table class="heatmap-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>
+    <div style="margin-top:16px;display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--muted)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:28px;height:10px;background:rgba(99,102,241,0.9);border-radius:3px;display:inline-block"></span>Strong +</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:28px;height:10px;background:rgba(99,102,241,0.2);border-radius:3px;display:inline-block"></span>Weak +</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:28px;height:10px;background:#f0f2f6;border-radius:3px;display:inline-block"></span>None</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:28px;height:10px;background:rgba(239,68,68,0.9);border-radius:3px;display:inline-block"></span>Strong −</span>
+    </div>
+  </div>`;
+}
+
+/* ── REGRESSION ── */
+function renderRegression(){
+  const metCols=columns.filter(c=>c.type==='metric');
+  if(metCols.length<2)return`<div class="card"><div class="empty-state"><i class="ti ti-trending-up"></i>Need at least 2 metric columns.</div></div>`;
+  const xSel=`<select id="reg-x">${metCols.map(c=>`<option value="${columns.indexOf(c)}">${c.name}</option>`).join('')}</select>`;
+  const ySel=`<select id="reg-y">${metCols.map((c,i)=>`<option value="${columns.indexOf(c)}" ${i===1?'selected':''}>${c.name}</option>`).join('')}</select>`;
+  return`<div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-trending-up"></i><a href="https://en.wikipedia.org/wiki/Linear_regression" target="_blank" rel="noopener" class="wiki-link">Simple Linear Regression<i class="ti ti-external-link wiki-icon"></i></a></div><div class="card-desc">Fits Ŷ = a + bX. Quantifies how well X predicts Y.</div></div>
+    <div class="form-row">
+      <div class="form-group"><label>X (Independent)</label>${xSel}</div>
+      <div class="form-group"><label>Y (Dependent)</label>${ySel}</div>
+      <button class="btn btn-primary btn-sm" id="btn-reg"><i class="ti ti-refresh"></i> Run Regression</button>
+    </div>
+    <div id="reg-results"></div>
+    <div class="chart-wrap" style="margin-top:18px;height:260px"><canvas id="chart-reg"></canvas></div>
+  </div>`;
+}
+function runRegression(){
+  const xi=parseInt(document.getElementById('reg-x').value);
+  const yi=parseInt(document.getElementById('reg-y').value);
+  const pairs=tableData.map(r=>[parseFloat(r[xi]),parseFloat(r[yi])]).filter(([a,b])=>!isNaN(a)&&!isNaN(b));
+  const xs=pairs.map(p=>p[0]),ys=pairs.map(p=>p[1]);
+  const mx=mean(xs),my=mean(ys);
+  const b=xs.reduce((a,v,i)=>a+(v-mx)*(ys[i]-my),0)/xs.reduce((a,v)=>a+(v-mx)**2,0);
+  const a=my-b*mx;
+  const ypred=xs.map(x=>a+b*x);
+  const sst=ys.reduce((s,v)=>s+(v-my)**2,0);
+  const sse=ys.reduce((s,v,i)=>s+(v-ypred[i])**2,0);
+  const r2=1-sse/sst;
+  const n=xs.length,mse=sse/(n-2);
+  const ssx=xs.reduce((s,v)=>s+(v-mx)**2,0);
+  const se_b=Math.sqrt(mse/ssx);
+  const t_b=b/se_b;const p_b=tPValue(t_b,n-2);const sig=p_b<0.05;
+  document.getElementById('reg-results').innerHTML=`
+    <div class="eq-box">Ŷ = ${a.toFixed(3)} + ${b.toFixed(3)} × ${columns[xi].name}</div>
+    <div class="metric-grid">
+      <div class="metric-card"><div class="val">${a.toFixed(3)}</div><div class="lbl">Intercept (a)</div></div>
+      <div class="metric-card"><div class="val">${b.toFixed(3)}</div><div class="lbl">Slope (b)</div></div>
+      <div class="metric-card"><div class="val">${r2.toFixed(3)}</div><div class="lbl">R²</div></div>
+      <div class="metric-card"><div class="val">${fmtP(p_b)}</div><div class="lbl">p-value (slope)</div></div>
+    </div>
+    <div style="margin-bottom:14px"><label style="margin-bottom:5px">R² = ${(r2*100).toFixed(1)}% of variance explained</label><div class="r2-bar"><div class="r2-fill" style="width:${Math.max(0,Math.min(100,r2*100))}%"></div></div></div>
+    <div class="test-result"><div class="interpret">${sig?`<span class="p-sig">Significant</span>: slope significant (${fmtP(p_b)}, α=0.05). For each 1-unit increase in ${columns[xi].name}, ${columns[yi].name} changes by ${b.toFixed(3)}.`:`<span class="p-ns">Not significant</span>: slope not significant (${fmtP(p_b)}, α=0.05).`}</div></div>`;
+  if(charts.reg)charts.reg.destroy();
+  const mnX=Math.min(...xs),mxX=Math.max(...xs);
+  charts.reg=new Chart(document.getElementById('chart-reg'),{type:'scatter',data:{datasets:[
+    {label:'Data',data:pairs.map(([x,y])=>({x,y})),backgroundColor:'rgba(99,102,241,0.35)',borderColor:'#6366f1',borderWidth:1,pointRadius:5},
+    {label:'Regression line',data:[{x:mnX,y:a+b*mnX},{x:mxX,y:a+b*mxX}],type:'line',borderColor:'#ef4444',borderWidth:2,pointRadius:0,fill:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:14}}},scales:{x:{title:{display:true,text:columns[xi].name,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},y:{title:{display:true,text:columns[yi].name,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}}}}});
+}
+function drawRegression(){document.getElementById('btn-reg').addEventListener('click',runRegression);runRegression();}
+
+/* ── SHAPIRO-WILK W approximation ── */
+function shapiroWilk(x){
+  const n=x.length;
+  if(n<3)return{W:null,normal:null,label:'n too small'};
+  const d=[...x].sort((a,b)=>a-b);
+  // Royston 1992 coefficients for n<=50
+  const m=mean(d),s=std(d);
+  // Use correlation of order stats with normal scores as W proxy
+  const pts=d.map((v,i)=>{const p=(i+1-0.375)/(n+0.25);return normInv(p);});
+  const W=Math.max(0,Math.min(1,pearson(pts,d)**2));
+  // Approximate critical value: W>0.94 for n>=10 suggests normality
+  const threshold=n<10?0.85:n<20?0.90:0.92;
+  const normal=W>=threshold;
+  const label=W>=0.97?'Strong normality':W>=0.94?'Approximate normality':W>=0.90?'Moderate deviation':W>=0.85?'Non-normal (mild)':'Non-normal';
+  return{W,normal,label,threshold};
+}
+
+/* ── ASSUMPTION CHECKER ── */
+function checkAssumptions(type,data1,data2){
+  const checks=[];
+  if(type==='t1'||type==='t2'||type==='paired'){
+    const sw1=shapiroWilk(data1);
+    const n1=data1.length;
+    const largeSample1=n1>=30;
+    const normalOk1=sw1.normal||largeSample1;
+    checks.push({
+      label:'Normality (Variable)',
+      ok:normalOk1,
+      detail:`W=${sw1.W?sw1.W.toFixed(3):'—'} (${sw1.label}), n=${n1}. ${largeSample1?'Large sample (n≥30) — CLT applies.':sw1.normal?'Normally distributed.':'Non-normal & small sample — consider non-parametric test.'}`
+    });
+    if(type==='t2'&&data2){
+      const sw2=shapiroWilk(data2);
+      const n2=data2.length;
+      const largeSample2=n2>=30;
+      const normalOk2=sw2.normal||largeSample2;
+      checks.push({
+        label:'Normality (Group 2)',
+        ok:normalOk2,
+        detail:`W=${sw2.W?sw2.W.toFixed(3):'—'} (${sw2.label}), n=${n2}. ${largeSample2?'Large sample (n≥30) — CLT applies.':sw2.normal?'Normally distributed.':'Non-normal & small sample.'}`
+      });
+      checks.push({
+        label:'Independence of groups',
+        ok:true,
+        detail:'Assumed by design — observations in each group must be independent.'
+      });
+    }
+    if(type==='paired'&&data2){
+      checks.push({label:'Paired observations',ok:data1.length===data2.length,detail:`Both columns have ${data1.length} vs ${data2?.length||0} values. Pairs must be matched (same subject, two conditions).`});
+    }
+    if(type==='t1'){
+      checks.push({label:'Independence of observations',ok:true,detail:'Assumed by design — each observation must be independent of the others.'});
+    }
+  }
+  if(type==='chi'){
+    checks.push({label:'Categorical variables',ok:true,detail:'Chi-square requires nominal or ordinal data — confirmed.'});
+    if(data1&&data2){
+      const minE=data1;// passing minExpected count
+      checks.push({label:'Expected cell frequencies ≥ 5',ok:minE>=0,detail:minE>0?`${minE} cell(s) have expected frequency < 5. Results may be unreliable — consider Fisher's exact test.`:'All expected cell frequencies ≥ 5. ✓'});
+    }
+    checks.push({label:'Independence of observations',ok:true,detail:'Each subject must contribute to only one cell of the contingency table.'});
+  }
+  if(type==='z1'||type==='z2'){
+    const n1=data1.length;
+    checks.push({label:'Known population σ or large sample',ok:n1>=30,detail:`n=${n1}. ${n1>=30?'Sample size ≥ 30 — Z-test is appropriate.':'Small sample (n<30). If σ is truly known from population, Z-test is valid; otherwise prefer t-test.'}`});
+    if(type==='z2'&&data2){
+      const n2=data2.length;
+      checks.push({label:'Second group sample size',ok:n2>=30,detail:`n=${n2}. ${n2>=30?'Large enough.':'Small sample — consider t-test if σ not truly known.'}`});
+    }
+  }
+  return checks;
+}
+
+function renderAssumptions(checks){
+  return`<div class="assumptions-box">
+    <div class="assumptions-title"><i class="ti ti-shield-check"></i>Assumption Checks</div>
+    ${checks.map(c=>`<div class="apply-row ${c.ok?'apply-row-ok':'apply-row-warn'}">
+      <span class="apply-row-title">${c.label}<span class="apply-badge ${c.ok?'apply-ok':'apply-warn'}">${c.ok?'✅ Applicable':'⚠️ Review'}</span></span>
+      <span class="apply-row-detail">${c.detail}</span>
+    </div>`).join('')}
+  </div>`;
+}
+
+/* ── HYPOTHESIS TESTS ── */
+function renderHypothesis(){
+  const metCols=columns.filter(c=>c.type==='metric');
+  const chiCols=columns.filter(c=>c.type==='nominal'||c.type==='ordinal');
+  const allCols=columns;
+  const metOpts=metCols.map(c=>`<option value="${columns.indexOf(c)}">${c.name}</option>`).join('');
+  const chiOpts=(chiCols.length>=2?chiCols:allCols).map(c=>`<option value="${columns.indexOf(c)}">${c.name} [${c.type}]</option>`).join('');
+  const groupOpts=columns.map(c=>`<option value="${columns.indexOf(c)}">${c.name} [${c.type}]</option>`).join('');
+  const noMet=metCols.length===0?`<div class="hint-box">No metric columns found. Set column types to M in the Data Table.</div>`:'';
+  return`<div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-flask"></i><a href="https://en.wikipedia.org/wiki/Statistical_hypothesis_testing" target="_blank" rel="noopener" class="wiki-link">Hypothesis Tests<i class="ti ti-external-link wiki-icon"></i></a></div>
+      <div class="card-desc">Statistical hypothesis testing at α = 0.05. Each test shows live assumption checks using Shapiro-Wilk normality analysis and sample size criteria.</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="t1"><a href="https://en.wikipedia.org/wiki/Student%27s_t-test" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">One-sample t</a></div>
+      <div class="tab" data-tab="t2"><a href="https://en.wikipedia.org/wiki/Student%27s_t-test#Independent_two-sample_t-test" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">Independent t</a></div>
+      <div class="tab" data-tab="paired"><a href="https://en.wikipedia.org/wiki/Student%27s_t-test#Paired_samples" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">Paired t</a></div>
+      <div class="tab" data-tab="chi"><a href="https://en.wikipedia.org/wiki/Chi-squared_test" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">Chi-square</a></div>
+    </div>
+
+    <div id="hyp-t1">
+      ${noMet}
+      <div class="hint-box"><strong>One-sample t-test</strong> — Tests whether the sample mean differs from a known or hypothesised value. H₀: μ = μ₀ vs. H₁: μ ≠ μ₀. Assumes normality (or n ≥ 30 by CLT). Best used when σ is unknown and estimated from sample.</div>
+      <div class="form-row">
+        <div class="form-group"><label>Variable (metric)</label><select id="t1-col" onchange="updateT1Assumptions()">${metOpts||'<option value="">— no metric cols —</option>'}</select></div>
+        <div class="form-group"><label>Test value (μ₀)</label><input type="number" id="t1-val" value="0"></div>
+        <button class="btn btn-primary btn-sm" id="btn-t1"><i class="ti ti-flask"></i> Run Test</button>
+      </div>
+      <div id="t1-assumptions"></div>
+      <div id="t1-result"></div>
+    </div>
+
+    <div id="hyp-t2" style="display:none">
+      ${noMet}
+      <div class="hint-box"><strong>Independent samples t-test (Welch's)</strong> — Tests whether two independent groups have different means. H₀: μ₁ = μ₂ vs. H₁: μ₁ ≠ μ₂. Uses Welch's correction for unequal variances. Requires approximately normal distributions or n ≥ 30 per group.</div>
+      <div class="form-row">
+        <div class="form-group"><label>Metric variable</label><select id="t2-metric" onchange="updateT2Assumptions()">${metOpts||'<option value="">— no metric cols —</option>'}</select></div>
+        <div class="form-group"><label>Grouping variable (2 groups)</label><select id="t2-group" onchange="updateT2Assumptions()">${groupOpts}</select></div>
+        <button class="btn btn-primary btn-sm" id="btn-t2"><i class="ti ti-flask"></i> Run Test</button>
+      </div>
+      <div id="t2-assumptions"></div>
+      <div id="t2-result"></div>
+    </div>
+
+    <div id="hyp-paired" style="display:none">
+      ${noMet}
+      <div class="hint-box"><strong>Paired samples t-test</strong> — Tests whether the mean difference between two related measurements is zero. H₀: μ_d = 0 vs. H₁: μ_d ≠ 0. Requires matched pairs (e.g. pre/post, same subject measured twice). Applies t-test to the column of differences.</div>
+      <div class="form-row">
+        <div class="form-group"><label>Variable 1 (Before / Condition A)</label><select id="paired-v1" onchange="updatePairedAssumptions()">${metOpts||'<option value="">— no metric cols —</option>'}</select></div>
+        <div class="form-group"><label>Variable 2 (After / Condition B)</label><select id="paired-v2" onchange="updatePairedAssumptions()">${metOpts||'<option value="">— no metric cols —</option>'}</select></div>
+        <button class="btn btn-primary btn-sm" id="btn-paired"><i class="ti ti-flask"></i> Run Test</button>
+      </div>
+      <div id="paired-assumptions"></div>
+      <div id="paired-result"></div>
+    </div>
+
+    <div id="hyp-chi" style="display:none">
+      <div class="hint-box"><strong>Chi-square test of independence</strong> — Tests whether two categorical variables are statistically independent. H₀: variables are independent vs. H₁: they are associated. Requires each cell to have an expected frequency ≥ 5; reports Cramér's V for effect size.</div>
+      <div class="form-row">
+        <div class="form-group"><label>Variable 1 (nominal/ordinal)</label><select id="chi-v1">${chiOpts||'<option value="">— need categorical cols —</option>'}</select></div>
+        <div class="form-group"><label>Variable 2 (nominal/ordinal)</label><select id="chi-v2">${chiOpts||'<option value="">— need categorical cols —</option>'}</select></div>
+        <button class="btn btn-primary btn-sm" id="btn-chi"><i class="ti ti-flask"></i> Run Test</button>
+      </div>
+      <div id="chi-assumptions"></div>
+      <div id="chi-result"></div>
+    </div>
+  </div>`;
+}
+
+/* ── Z TEST ── */
+function renderZTest(){
+  const metCols=columns.filter(c=>c.type==='metric');
+  const metOpts=metCols.map(c=>`<option value="${columns.indexOf(c)}">${c.name}</option>`).join('');
+  return`<div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-math-function"></i><a href="https://en.wikipedia.org/wiki/Z-test" target="_blank" rel="noopener" class="wiki-link">Z-Test<i class="ti ti-external-link wiki-icon"></i></a></div>
+      <div class="card-desc">Use when population σ is known, or sample size n ≥ 30. Assumption checks are shown automatically.</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="z1">One-sample Z-test</div>
+      <div class="tab" data-tab="z2">Two-sample Z-test</div>
+    </div>
+    <div id="hyp-z1">
+      <div class="hint-box"><strong>One-sample Z-test</strong> — H₀: μ = μ₀ vs. H₁: μ ≠ μ₀. Requires known population σ, or justified by large sample (n ≥ 30). The Z-statistic = (x̄ − μ₀) / (σ/√n).</div>
+      <div class="form-row">
+        <div class="form-group"><label>Variable</label><select id="z1-col" onchange="updateZ1Assumptions()">${metOpts}</select></div>
+        <div class="form-group"><label>Population mean (μ₀)</label><input type="number" id="z1-mu" value="0"></div>
+        <div class="form-group"><label>Population std dev (σ)</label><input type="number" id="z1-sigma" value="1" min="0.0001"></div>
+        <button class="btn btn-primary btn-sm" id="btn-z1"><i class="ti ti-flask"></i> Run Test</button>
+      </div>
+      <div id="z1-assumptions"></div>
+      <div id="z1-result"></div>
+    </div>
+    <div id="hyp-z2" style="display:none">
+      <div class="hint-box"><strong>Two-sample Z-test</strong> — H₀: μ₁ = μ₂ vs. H₁: μ₁ ≠ μ₂. Select a metric variable and a grouping variable with exactly 2 groups. Provide known σ for each group, or rely on n ≥ 30.</div>
+      <div class="form-row">
+        <div class="form-group"><label>Metric variable</label><select id="z2-metric" onchange="updateZ2Assumptions()">${metOpts}</select></div>
+        <div class="form-group"><label>Grouping variable</label><select id="z2-group" onchange="updateZ2Assumptions()">${columns.map(c=>`<option value="${columns.indexOf(c)}">${c.name} [${c.type}]</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>σ₁ (Group 1)</label><input type="number" id="z2-sigma1" value="1" min="0.0001"></div>
+        <div class="form-group"><label>σ₂ (Group 2)</label><input type="number" id="z2-sigma2" value="1" min="0.0001"></div>
+        <button class="btn btn-primary btn-sm" id="btn-z2"><i class="ti ti-flask"></i> Run Test</button>
+      </div>
+      <div id="z2-assumptions"></div>
+      <div id="z2-result"></div>
+    </div>
+  </div>`;
+}
+
+/* ── LIVE ASSUMPTION UPDATERS ── */
+function updateT1Assumptions(){
+  const ci=parseInt(document.getElementById('t1-col')?.value);
+  if(isNaN(ci))return;
+  const d=getNumeric(ci);
+  if(d.length<2)return;
+  const checks=checkAssumptions('t1',d);
+  const el=document.getElementById('t1-assumptions');
+  if(el)el.innerHTML=renderAssumptions(checks);
+}
+function updateT2Assumptions(){
+  const mi=parseInt(document.getElementById('t2-metric')?.value);
+  const gi=parseInt(document.getElementById('t2-group')?.value);
+  if(isNaN(mi)||isNaN(gi))return;
+  const pairs=tableData.map(r=>[parseFloat(r[mi]),String(r[gi])]).filter(([v,g])=>!isNaN(v)&&g!==''&&g!=='undefined');
+  const groups={};pairs.forEach(([v,g])=>{if(!groups[g])groups[g]=[];groups[g].push(v);});
+  const keys=Object.keys(groups);
+  if(keys.length!==2)return;
+  const checks=checkAssumptions('t2',groups[keys[0]],groups[keys[1]]);
+  const el=document.getElementById('t2-assumptions');
+  if(el)el.innerHTML=renderAssumptions(checks);
+}
+function updatePairedAssumptions(){
+  const i1=parseInt(document.getElementById('paired-v1')?.value);
+  const i2=parseInt(document.getElementById('paired-v2')?.value);
+  if(isNaN(i1)||isNaN(i2)||i1===i2)return;
+  const pairs=tableData.map(r=>[parseFloat(r[i1]),parseFloat(r[i2])]).filter(([a,b])=>!isNaN(a)&&!isNaN(b));
+  const diffs=pairs.map(([a,b])=>a-b);
+  const checks=checkAssumptions('paired',diffs,new Array(pairs.length).fill(0));
+  const el=document.getElementById('paired-assumptions');
+  if(el)el.innerHTML=renderAssumptions(checks);
+}
+function updateZ1Assumptions(){
+  const ci=parseInt(document.getElementById('z1-col')?.value);
+  if(isNaN(ci))return;
+  const d=getNumeric(ci);
+  const checks=checkAssumptions('z1',d);
+  const el=document.getElementById('z1-assumptions');
+  if(el)el.innerHTML=renderAssumptions(checks);
+}
+function updateZ2Assumptions(){
+  const mi=parseInt(document.getElementById('z2-metric')?.value);
+  const gi=parseInt(document.getElementById('z2-group')?.value);
+  if(isNaN(mi)||isNaN(gi))return;
+  const pairs=tableData.map(r=>[parseFloat(r[mi]),String(r[gi])]).filter(([v,g])=>!isNaN(v)&&g!==''&&g!=='undefined');
+  const groups={};pairs.forEach(([v,g])=>{if(!groups[g])groups[g]=[];groups[g].push(v);});
+  const keys=Object.keys(groups);
+  if(keys.length!==2)return;
+  const checks=checkAssumptions('z2',groups[keys[0]],groups[keys[1]]);
+  const el=document.getElementById('z2-assumptions');
+  if(el)el.innerHTML=renderAssumptions(checks);
+}
+
+/* ── TEST RUNNERS ── */
+function runT1(){
+  const ci=parseInt(document.getElementById('t1-col').value);
+  if(isNaN(ci)){document.getElementById('t1-result').innerHTML=`<div class="test-result"><div class="interpret">No metric column selected.</div></div>`;return;}
+  const mu0=parseFloat(document.getElementById('t1-val').value);
+  const d=getNumeric(ci);
+  if(d.length<2){document.getElementById('t1-result').innerHTML=`<div class="test-result"><div class="interpret">Need at least 2 numeric values.</div></div>`;return;}
+  updateT1Assumptions();
+  const m=mean(d),s=std(d),n=d.length;
+  const t=(m-mu0)/(s/Math.sqrt(n));const df=n-1;const p=tPValue(t,df);const sig=p<0.05;
+  const ci95=1.96*s/Math.sqrt(n);
+  document.getElementById('t1-result').innerHTML=`<div class="test-result">
+    <div class="test-stat">t(${df}) = ${t.toFixed(3)}, ${fmtP(p)}, n = ${n}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">M = ${m.toFixed(3)}, SD = ${s.toFixed(3)}, μ₀ = ${mu0} &nbsp;|&nbsp; 95% CI: [${(m-ci95).toFixed(2)}, ${(m+ci95).toFixed(2)}]</div>
+    <div class="interpret">${sig?`<span class="p-sig">Reject H₀</span>: Mean of ${columns[ci].name} (M=${m.toFixed(2)}) differs significantly from ${mu0} (${fmtP(p)}, α=0.05).`:`<span class="p-ns">Fail to reject H₀</span>: No significant evidence mean of ${columns[ci].name} (M=${m.toFixed(2)}) differs from ${mu0} (${fmtP(p)}, α=0.05).`}</div>
+  </div>`;
+}
+
+function runT2(){
+  const mi=parseInt(document.getElementById('t2-metric').value);
+  const gi=parseInt(document.getElementById('t2-group').value);
+  if(isNaN(mi)||isNaN(gi)){document.getElementById('t2-result').innerHTML=`<div class="test-result"><div class="interpret">Select both variables.</div></div>`;return;}
+  const pairs=tableData.map(r=>[parseFloat(r[mi]),String(r[gi])]).filter(([v,g])=>!isNaN(v)&&g!==''&&g!=='undefined'&&g!=='NaN');
+  const groups={};pairs.forEach(([v,g])=>{if(!groups[g])groups[g]=[];groups[g].push(v);});
+  const keys=Object.keys(groups);
+  if(keys.length!==2){document.getElementById('t2-result').innerHTML=`<div class="test-result"><div class="interpret">Need exactly 2 groups. Found ${keys.length}: ${keys.slice(0,5).join(', ')}.</div></div>`;return;}
+  const g1=groups[keys[0]],g2=groups[keys[1]];
+  if(g1.length<2||g2.length<2){document.getElementById('t2-result').innerHTML=`<div class="test-result"><div class="interpret">Each group needs ≥ 2 observations.</div></div>`;return;}
+  updateT2Assumptions();
+  const n1=g1.length,n2=g2.length,m1=mean(g1),m2=mean(g2),v1=variance(g1),v2=variance(g2);
+  const se=Math.sqrt(v1/n1+v2/n2);const t=(m1-m2)/se;
+  const df=Math.round((v1/n1+v2/n2)**2/((v1/n1)**2/(n1-1)+(v2/n2)**2/(n2-1)));
+  const p=tPValue(t,df);const sig=p<0.05;
+  const cohd=Math.abs(m1-m2)/Math.sqrt((v1*(n1-1)+v2*(n2-1))/(n1+n2-2));
+  document.getElementById('t2-result').innerHTML=`<div class="test-result">
+    <div class="test-stat">t(${df}) = ${t.toFixed(3)}, ${fmtP(p)}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">"${keys[0]}": M=${m1.toFixed(2)}, SD=${Math.sqrt(v1).toFixed(2)}, n=${n1} &nbsp;|&nbsp; "${keys[1]}": M=${m2.toFixed(2)}, SD=${Math.sqrt(v2).toFixed(2)}, n=${n2} &nbsp;|&nbsp; Cohen's d=${cohd.toFixed(3)} (${cohd<0.2?'trivial':cohd<0.5?'small':cohd<0.8?'medium':'large'})</div>
+    <div class="interpret">${sig?`<span class="p-sig">Reject H₀</span>: Significant difference in ${columns[mi].name} between "${keys[0]}" and "${keys[1]}" (${fmtP(p)}, α=0.05). Cohen's d=${cohd.toFixed(2)}.`:`<span class="p-ns">Fail to reject H₀</span>: No significant difference (${fmtP(p)}, α=0.05).`}</div>
+  </div>`;
+}
+
+function runPaired(){
+  const i1=parseInt(document.getElementById('paired-v1').value);
+  const i2=parseInt(document.getElementById('paired-v2').value);
+  if(isNaN(i1)||isNaN(i2)){document.getElementById('paired-result').innerHTML=`<div class="test-result"><div class="interpret">Select two metric variables.</div></div>`;return;}
+  if(i1===i2){document.getElementById('paired-result').innerHTML=`<div class="test-result"><div class="interpret">Please select two different columns.</div></div>`;return;}
+  const pairs=tableData.map(r=>[parseFloat(r[i1]),parseFloat(r[i2])]).filter(([a,b])=>!isNaN(a)&&!isNaN(b));
+  if(pairs.length<2){document.getElementById('paired-result').innerHTML=`<div class="test-result"><div class="interpret">Need at least 2 paired observations.</div></div>`;return;}
+  updatePairedAssumptions();
+  const diffs=pairs.map(([a,b])=>a-b);
+  const n=diffs.length,md=mean(diffs),sd=std(diffs);
+  const t=md/(sd/Math.sqrt(n));const df=n-1;const p=tPValue(t,df);const sig=p<0.05;
+  const ci95=1.96*sd/Math.sqrt(n);
+  const cohd=Math.abs(md/sd);
+  document.getElementById('paired-result').innerHTML=`<div class="test-result">
+    <div class="test-stat">t(${df}) = ${t.toFixed(3)}, ${fmtP(p)}, n pairs = ${n}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Mean diff = ${md.toFixed(3)}, SD(diff) = ${sd.toFixed(3)} &nbsp;|&nbsp; 95% CI: [${(md-ci95).toFixed(2)}, ${(md+ci95).toFixed(2)}] &nbsp;|&nbsp; Cohen's d_z = ${cohd.toFixed(3)}</div>
+    <div class="interpret">${sig?`<span class="p-sig">Reject H₀</span>: Significant mean difference between ${columns[i1].name} and ${columns[i2].name} (mean diff=${md.toFixed(2)}, ${fmtP(p)}, α=0.05).`:`<span class="p-ns">Fail to reject H₀</span>: No significant mean difference between ${columns[i1].name} and ${columns[i2].name} (${fmtP(p)}, α=0.05).`}</div>
+  </div>`;
+}
+
+function runChi(){
+  const v1i=parseInt(document.getElementById('chi-v1').value);
+  const v2i=parseInt(document.getElementById('chi-v2').value);
+  if(isNaN(v1i)||isNaN(v2i)){document.getElementById('chi-result').innerHTML=`<div class="test-result"><div class="interpret">Select two variables.</div></div>`;return;}
+  if(v1i===v2i){document.getElementById('chi-result').innerHTML=`<div class="test-result"><div class="interpret">Select two <strong>different</strong> variables.</div></div>`;return;}
+  const pairs=tableData.map(r=>[String(r[v1i]),String(r[v2i])]).filter(([a,b])=>a!==''&&a!=='undefined'&&a!=='NaN'&&b!==''&&b!=='undefined'&&b!=='NaN');
+  if(pairs.length<5){document.getElementById('chi-result').innerHTML=`<div class="test-result"><div class="interpret">Need at least 5 paired observations. Found ${pairs.length}.</div></div>`;return;}
+  const r1=pairs.map(p=>p[0]),r2=pairs.map(p=>p[1]);
+  const cats1=[...new Set(r1)].sort(),cats2=[...new Set(r2)].sort();
+  if(cats1.length<2||cats2.length<2){document.getElementById('chi-result').innerHTML=`<div class="test-result"><div class="interpret">Each variable needs ≥ 2 distinct categories.</div></div>`;return;}
+  const n=pairs.length;
+  const obs=cats1.map(a=>cats2.map(b=>r1.filter((v,i)=>v===a&&r2[i]===b).length));
+  const rowSums=obs.map(row=>row.reduce((a,b)=>a+b,0));
+  const colSums=cats2.map((_,j)=>obs.reduce((a,row)=>a+row[j],0));
+  let chi2=0;let lowExpected=0;
+  obs.forEach((row,i)=>row.forEach((o,j)=>{const e=rowSums[i]*colSums[j]/n;if(e<5)lowExpected++;if(e>0)chi2+=(o-e)**2/e;}));
+  const df=(cats1.length-1)*(cats2.length-1);const p=chiSquareP(chi2,df);const sig=p<0.05;
+  const cramersV=Math.sqrt(chi2/(n*Math.min(cats1.length-1,cats2.length-1)));
+  // Show assumption checks
+  const checks=checkAssumptions('chi',lowExpected);
+  document.getElementById('chi-assumptions').innerHTML=renderAssumptions(checks);
+  const warn=lowExpected>0?`<div style="font-size:12px;color:var(--amber);margin-top:6px">⚠ ${lowExpected} cell(s) with expected frequency < 5.</div>`:'';
+  const ctHead=`<th style="background:var(--surface2);padding:6px 10px"></th>${cats2.map(c=>`<th style="background:var(--surface2);padding:6px 10px;font-size:11px">${c}</th>`).join('')}<th style="background:var(--surface3);padding:6px 10px;font-size:11px">Total</th>`;
+  const ctBody=obs.map((row,i)=>`<tr><th style="background:var(--surface2);padding:6px 10px;font-size:11px;text-align:right">${cats1[i]}</th>${row.map(v=>`<td style="padding:6px 10px;text-align:center;font-family:var(--mono);font-size:12px">${v}</td>`).join('')}<td style="padding:6px 10px;text-align:center;font-family:var(--mono);font-size:12px;background:var(--surface3)">${rowSums[i]}</td></tr>`).join('');
+  const ctFoot=`<tr><th style="background:var(--surface3);padding:6px 10px;font-size:11px">Total</th>${colSums.map(s=>`<td style="background:var(--surface3);padding:6px 10px;text-align:center;font-family:var(--mono);font-size:12px">${s}</td>`).join('')}<td style="background:var(--surface3);padding:6px 10px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:600">${n}</td></tr>`;
+  document.getElementById('chi-result').innerHTML=`<div class="test-result">
+    <div class="test-stat">χ²(${df}) = ${chi2.toFixed(3)}, ${fmtP(p)}, n = ${n}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Table: ${cats1.length}×${cats2.length} &nbsp;|&nbsp; Cramér's V = ${cramersV.toFixed(3)} (${cramersV<0.1?'negligible':cramersV<0.3?'small':cramersV<0.5?'moderate':'strong'} effect)</div>
+    <div class="interpret">${sig?`<span class="p-sig">Reject H₀</span>: Significant association between ${columns[v1i].name} and ${columns[v2i].name} (${fmtP(p)}, α=0.05).`:`<span class="p-ns">Fail to reject H₀</span>: No significant association (${fmtP(p)}, α=0.05).`}</div>
+    ${warn}
+  </div>
+  <div style="margin-top:16px"><div class="chart-label">Contingency Table</div>
+    <div class="table-wrap"><table class="stats-table" style="font-size:12px"><thead><tr>${ctHead}</tr></thead><tbody>${ctBody}${ctFoot}</tbody></table></div>
+  </div>`;
+}
+
+function runZ1(){
+  const ci=parseInt(document.getElementById('z1-col').value);
+  const mu0=parseFloat(document.getElementById('z1-mu').value);
+  const sig=parseFloat(document.getElementById('z1-sigma').value);
+  const d=getNumeric(ci);
+  if(d.length<1||sig<=0)return;
+  updateZ1Assumptions();
+  const n=d.length;const xbar=mean(d);
+  const z=(xbar-mu0)/(sig/Math.sqrt(n));
+  const p=zPValue(z);const significant=p<0.05;
+  const ci95=1.96*sig/Math.sqrt(n);
+  document.getElementById('z1-result').innerHTML=`<div class="test-result">
+    <div class="test-stat">Z = ${z.toFixed(3)}, ${fmtP(p)}, n = ${n}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">x̄=${xbar.toFixed(3)}, μ₀=${mu0}, σ=${sig}, SE=${(sig/Math.sqrt(n)).toFixed(4)} &nbsp;|&nbsp; 95% CI: [${(xbar-ci95).toFixed(2)}, ${(xbar+ci95).toFixed(2)}]</div>
+    <div class="interpret">${significant?`<span class="p-sig">Reject H₀</span>: Mean of ${columns[ci].name} (x̄=${xbar.toFixed(2)}) significantly differs from μ₀=${mu0} (${fmtP(p)}, α=0.05).`:`<span class="p-ns">Fail to reject H₀</span>: No significant evidence (${fmtP(p)}, α=0.05).`}</div>
+  </div>`;
+}
+
+function runZ2(){
+  const mi=parseInt(document.getElementById('z2-metric').value);
+  const gi=parseInt(document.getElementById('z2-group').value);
+  const s1=parseFloat(document.getElementById('z2-sigma1').value);
+  const s2=parseFloat(document.getElementById('z2-sigma2').value);
+  if(s1<=0||s2<=0)return;
+  const pairs=tableData.map(r=>[parseFloat(r[mi]),String(r[gi])]).filter(([v,g])=>!isNaN(v)&&g!==''&&g!=='undefined');
+  const groups={};pairs.forEach(([v,g])=>{if(!groups[g])groups[g]=[];groups[g].push(v);});
+  const keys=Object.keys(groups);
+  if(keys.length<2){document.getElementById('z2-result').innerHTML=`<div class="test-result"><div class="interpret">Need exactly 2 groups. Found: ${keys.length}</div></div>`;return;}
+  updateZ2Assumptions();
+  const g1=groups[keys[0]],g2=groups[keys[1]];
+  const n1=g1.length,n2=g2.length;const m1=mean(g1),m2=mean(g2);
+  const se=Math.sqrt((s1*s1)/n1+(s2*s2)/n2);const z=(m1-m2)/se;
+  const p=zPValue(z);const significant=p<0.05;
+  document.getElementById('z2-result').innerHTML=`<div class="test-result">
+    <div class="test-stat">Z = ${z.toFixed(3)}, ${fmtP(p)}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">"${keys[0]}": x̄=${m1.toFixed(2)}, n=${n1}, σ=${s1} | "${keys[1]}": x̄=${m2.toFixed(2)}, n=${n2}, σ=${s2}</div>
+    <div class="interpret">${significant?`<span class="p-sig">Reject H₀</span>: Significant difference in ${columns[mi].name} (${fmtP(p)}, α=0.05).`:`<span class="p-ns">Fail to reject H₀</span>: No significant difference (${fmtP(p)}, α=0.05).`}</div>
+  </div>`;
+}
+
+/* ── BIND EVENTS ── */
+function bindEvents(){
+  document.querySelectorAll('.nav-item').forEach(el=>{el.addEventListener('click',()=>{currentPage=el.dataset.page;renderPage();});});
+  if(currentPage==='data'){
+    document.querySelectorAll('.col-name-input').forEach(inp=>{inp.addEventListener('change',e=>{columns[parseInt(e.target.dataset.colidx)].name=e.target.value;});});
+    document.querySelectorAll('.type-btn').forEach(btn=>{btn.addEventListener('click',e=>{columns[parseInt(e.target.dataset.colidx)].type=e.target.dataset.type;renderPage();});});
+    document.querySelectorAll('.cell-input').forEach(inp=>{inp.addEventListener('change',e=>{tableData[parseInt(e.target.dataset.row)][parseInt(e.target.dataset.col)]=e.target.value;});});
+    document.getElementById('btn-sample').addEventListener('click',()=>{columns=JSON.parse(JSON.stringify(SAMPLE_COLUMNS));tableData=SAMPLE_DATA.map(r=>[...r]);renderPage();});
+    document.getElementById('btn-clear').addEventListener('click',()=>{tableData=Array.from({length:5},()=>Array(columns.length).fill(''));renderPage();});
+    document.getElementById('btn-addrow').addEventListener('click',()=>{tableData.push(Array(columns.length).fill(''));renderPage();});
+    document.getElementById('btn-addcol').addEventListener('click',()=>{columns.push({name:'Var'+(columns.length+1),type:'metric'});tableData.forEach(r=>r.push(''));renderPage();});
+    document.addEventListener('paste',e=>{
+      const active=document.activeElement;
+      if(!active||!active.classList.contains('cell-input')){
+        const txt=e.clipboardData.getData('text');
+        const rows=txt.trim().split(/\r?\n/).map(r=>r.split('\t'));
+        if(rows.length>1){
+          const headers=rows[0];const dataRows=rows.slice(1);
+          columns=headers.map((h,i)=>({name:h,type:isNaN(parseFloat(dataRows[0]?.[i]))?'nominal':'metric'}));
+          tableData=dataRows.map(r=>r);renderPage();
+        }
+      }
+    });
+  }
+  if(currentPage==='hypothesis'){
+    document.querySelectorAll('.tab').forEach(tab=>{
+      tab.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        ['t1','t2','paired','chi'].forEach(id=>{const el=document.getElementById('hyp-'+id);if(el)el.style.display='none';});
+        const el=document.getElementById('hyp-'+tab.dataset.tab);if(el)el.style.display='block';
+      });
+    });
+    const bt1=document.getElementById('btn-t1');if(bt1)bt1.addEventListener('click',runT1);
+    const bt2=document.getElementById('btn-t2');if(bt2)bt2.addEventListener('click',runT2);
+    const bp=document.getElementById('btn-paired');if(bp)bp.addEventListener('click',runPaired);
+    const bc=document.getElementById('btn-chi');if(bc)bc.addEventListener('click',runChi);
+    // Trigger initial assumption checks
+    setTimeout(()=>{updateT1Assumptions();},50);
+  }
+  if(currentPage==='ztest'){
+    document.querySelectorAll('.tab').forEach(tab=>{
+      tab.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        ['z1','z2'].forEach(id=>{const el=document.getElementById('hyp-'+id);if(el)el.style.display='none';});
+        const el=document.getElementById('hyp-'+tab.dataset.tab);if(el)el.style.display='block';
+      });
+    });
+    const bz1=document.getElementById('btn-z1');if(bz1)bz1.addEventListener('click',runZ1);
+    const bz2=document.getElementById('btn-z2');if(bz2)bz2.addEventListener('click',runZ2);
+    setTimeout(()=>{updateZ1Assumptions();},50);
+  }
+  document.getElementById('import-modal').addEventListener('click',function(e){if(e.target===this)closeImportModal();});
+}
+
+renderPage();
+
+/* ── NAV TOOLTIPS ── */
+const NAV_TIPS={
+  data:{icon:'ti ti-table',title:'Data Table',body:'Enter your dataset manually, paste from Excel, or import a CSV file. Assign each column a type — Metric (numbers), Ordinal (ranked labels), or Nominal (unordered categories) — to unlock the right analyses.',wiki:'https://en.wikipedia.org/wiki/Data'},
+  descriptive:{icon:'ti ti-math',title:'Descriptive Statistics',body:'Summarises a dataset\'s key features: central tendency (mean, median, mode), spread (variance, std dev, IQR), and shape (skewness, kurtosis). The essential first step before any inferential analysis.',wiki:'https://en.wikipedia.org/wiki/Descriptive_statistics'},
+  frequency:{icon:'ti ti-list-numbers',title:'Frequency Tables',body:'Counts how often each value (or binned range) occurs. Relative frequency shows the proportion; cumulative frequency tracks the running total. Useful for spotting dominant categories or outlier bins.',wiki:'https://en.wikipedia.org/wiki/Frequency_distribution'},
+  charts:{icon:'ti ti-chart-bar',title:'Charts & Visualizations',body:'Visual exploration: histograms show distribution shape, bar charts compare categories, scatter plots reveal relationships, and box plots highlight spread, quartiles, and outliers.',wiki:'https://en.wikipedia.org/wiki/Chart'},
+  qqplot:{icon:'ti ti-chart-line',title:'Q-Q Plot',body:'Plots your data\'s quantiles against expected normal quantiles. Points close to the diagonal line indicate normality — a key assumption for t-tests and other parametric methods.',wiki:'https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot'},
+  correlation:{icon:'ti ti-grid-dots',title:'Correlation Matrix',body:'Measures linear relationships between variable pairs (−1 to +1). Pearson for metric data; Spearman rank correlation for ordinal or non-normal data.',wiki:'https://en.wikipedia.org/wiki/Correlation'},
+  regression:{icon:'ti ti-trending-up',title:'Simple Linear Regression',body:'Fits Ŷ = a + bX. The slope b shows change in Y per unit of X, R² measures variance explained, and the p-value tests if the relationship is significant.',wiki:'https://en.wikipedia.org/wiki/Linear_regression'},
+  hypothesis:{icon:'ti ti-flask',title:'Hypothesis Testing',body:'Tests claims about populations using sample data. H₀ assumes no effect; if p < α (0.05) we reject H₀. Includes t-tests, paired t-test, and chi-square. Assumption checks run automatically.',wiki:'https://en.wikipedia.org/wiki/Statistical_hypothesis_testing'},
+  ztest:{icon:'ti ti-math-function',title:'Z-Test',body:'Tests whether a sample mean differs from a known population mean. Requires known σ or large samples (n ≥ 30). Applicability is checked dynamically against your data.',wiki:'https://en.wikipedia.org/wiki/Z-test'}
+};
+
+(function initTooltips(){
+  const tooltip=document.getElementById('nav-tooltip');
+  const tipTitle=document.getElementById('nav-tooltip-title');
+  const tipBody=document.getElementById('nav-tooltip-body');
+  const tipLink=document.getElementById('nav-tooltip-link');
+  let hideTimer=null;
+  let isOverTooltip=false;
+
+  function showTooltip(key,rect){
+    const t=NAV_TIPS[key];if(!t)return;
+    tipTitle.innerHTML=`<i class="${t.icon}" style="pointer-events:none"></i>${t.title}`;
+    tipBody.textContent=t.body;
+    tipLink.href=t.wiki;
+    tooltip.style.top=Math.max(8,rect.top+rect.height/2-72)+'px';
+    tooltip.classList.add('visible');
+  }
+
+  function scheduleHide(){
+    clearTimeout(hideTimer);
+    hideTimer=setTimeout(()=>{if(!isOverTooltip)tooltip.classList.remove('visible');},180);
+  }
+
+  document.querySelectorAll('.nav-item[data-tip]').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{
+      clearTimeout(hideTimer);
+      // Instant show — no delay
+      showTooltip(el.dataset.tip,el.getBoundingClientRect());
+    });
+    el.addEventListener('mouseleave',scheduleHide);
+  });
+
+  tooltip.addEventListener('mouseenter',()=>{isOverTooltip=true;clearTimeout(hideTimer);});
+  tooltip.addEventListener('mouseleave',()=>{isOverTooltip=false;tooltip.classList.remove('visible');});
+})();
+
+/* ── PRINT DROPDOWN ── */
+function togglePrintDropdown(){document.getElementById('print-dropdown').classList.toggle('open');}
+document.addEventListener('click',function(e){
+  const wrap=document.getElementById('print-wrap');
+  if(wrap&&!wrap.contains(e.target))document.getElementById('print-dropdown').classList.remove('open');
+});
+
+function printCurrentPage(){
+  document.getElementById('print-dropdown').classList.remove('open');
+  window.print();
+}
+
+async function printAllPages(){
+  document.getElementById('print-dropdown').classList.remove('open');
+  const pages=['data','descriptive','frequency','charts','qqplot','correlation','regression','hypothesis','ztest'];
+  const pageTitles={data:'Data Table',descriptive:'Descriptive Statistics',frequency:'Frequency Tables',charts:'Charts & Visualizations',qqplot:'Q-Q Plot',correlation:'Correlation Matrix',regression:'Simple Linear Regression',hypothesis:'Hypothesis Tests',ztest:'Z-Test'};
+  const savedPage=currentPage;
+  const content=document.getElementById('content');
+
+  // Remove old container if exists
+  let old=document.getElementById('all-pages-container');
+  if(old)old.remove();
+  const container=document.createElement('div');
+  container.id='all-pages-container';
+  container.className='all-pages-container';
+  document.body.appendChild(container);
+
+  // Render each page into the container
+  for(const page of pages){
+    currentPage=page;
+    const tmp=document.createElement('div');
+    if(page==='data')tmp.innerHTML=renderData();
+    else if(page==='descriptive')tmp.innerHTML=renderDescriptive();
+    else if(page==='frequency')tmp.innerHTML=renderFrequency();
+    else if(page==='charts')tmp.innerHTML=renderCharts();
+    else if(page==='qqplot')tmp.innerHTML=renderQQPlot();
+    else if(page==='correlation')tmp.innerHTML=renderCorrelation();
+    else if(page==='regression')tmp.innerHTML=renderRegression();
+    else if(page==='hypothesis')tmp.innerHTML=renderHypothesis();
+    else if(page==='ztest')tmp.innerHTML=renderZTest();
+    const section=document.createElement('div');
+    section.className='print-page-section';
+    section.innerHTML=`<div class="print-section-title"><i class="${(NAV_TIPS[page]||{}).icon||'ti ti-circle'}" style="color:#6366f1"></i> ${pageTitles[page]||page}</div>`;
+    section.appendChild(tmp);
+    container.appendChild(section);
+  }
+
+  document.body.classList.add('print-all');
+  content.style.display='none';
+
+  // Draw charts in the container
+  destroyCharts();
+  currentPage='charts';
+  try{drawCharts();}catch(e){}
+  currentPage='qqplot';
+  try{drawQQPlots();}catch(e){}
+  currentPage='regression';
+  try{runRegression();}catch(e){}
+
+  await new Promise(r=>setTimeout(r,800));
+  window.print();
+
+  // Restore state
+  document.body.classList.remove('print-all');
+  content.style.display='';
+  container.remove();
+  currentPage=savedPage;
+  renderPage();
+}
+</script>
+</body>
+</html>

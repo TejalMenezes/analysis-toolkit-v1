@@ -1,0 +1,15 @@
+
+streamlit
+pandas
+numpy
+scipy
+statsmodels
+scikit-learn
+pingouin
+plotly
+matplotlib
+openpyxl
+jinja2
+python-docx
+reportlab
+kagglehub

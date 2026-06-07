@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./venv/Scripts/python.exe -c \"import streamlit,pandas,numpy,scipy,statsmodels,plotly,sklearn; print\\('core OK'\\)\")",
+      "Bash(./venv/Scripts/python.exe -c \"import scipy; from scipy import stats; print\\('scipy', scipy.__version__\\)\")",
+      "Bash(./venv/Scripts/python.exe -m pip list)",
+      "Bash(./venv/Scripts/python.exe -m pip install -r requirements.txt)",
+      "Bash(./venv/Scripts/python.exe -m py_compile app.py modules/*.py pages/*.py)",
+      "Bash(./venv/Scripts/python.exe -c \"import streamlit,pandas,numpy,scipy,statsmodels,plotly,sklearn; print\\('imports OK'\\)\")",
+      "Bash(./venv/Scripts/python.exe -m streamlit run app.py --server.headless true --server.port 8765)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8765/)",
+      "Bash(./venv/Scripts/python.exe -m streamlit run app.py --server.headless true --server.port 8501)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8501/)",
+      "Bash(tasklist)",
+      "Bash(./venv/Scripts/python.exe -c \"import kagglehub; print\\('kagglehub', kagglehub.__version__\\)\")",
+      "Bash(./venv/Scripts/python.exe -m streamlit run app.py --server.port 8501)",
+      "Bash(echo \"launching pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"recheck HTTP %{http_code}\\\\n\" http://localhost:8501/)",
+      "Bash(./venv/Scripts/python.exe -m pip install reportlab)",
+      "Bash(./venv/Scripts/python.exe -c \"import reportlab; print\\('reportlab', reportlab.Version\\)\")",
+      "Bash(./venv/Scripts/python.exe docs/generate_docs.py)",
+      "Bash(git init *)",
+      "Bash(git symbolic-ref *)",
+      "Bash(git config *)",
+      "Bash(git rm *)"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+# virtual environment
+venv/
+.venv/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+
+# streamlit
+.streamlit/secrets.toml
+
+# os / editor
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+
+# local scratch
+*.log
+streamlit.log
+
+# local tooling
+.claude/
