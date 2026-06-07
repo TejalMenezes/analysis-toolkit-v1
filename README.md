@@ -95,18 +95,24 @@ python -c "from pyngrok import ngrok; print(ngrok.connect(8501))"
 
 ## 📄 Documentation & deliverables
 
-Generated PDFs live in [`docs/`](docs/):
+Generated documentation lives in [`docs/`](docs/), in **both PDF and Word (.docx)**:
 
 | File | Contents |
 |------|----------|
-| **`docs/Analysis_Documentation.pdf`** | A guided statistical study of the dataset built with the report engine — problem statements for (a) descriptive stats, (b) categorical testing, (c) correlation & regression, (d) predictive/linear-regression trends, and (e) a synthesis tying it together. |
-| **`docs/System_Documentation.pdf`** | Abstract, system design (with architecture diagram), tech stack, dataset introduction, analysis, conclusion of analysis, and project conclusion — with charts. |
+| **`Analysis_Documentation.pdf` / `.docx`** | A guided statistical study — cover, table of contents, then sections (each on its own page) with a problem statement, method, figure/table and interpretation for (1) descriptive stats, (2) categorical testing, (3) correlation, (4) predictive/linear-regression trends, and (5) a synthesis. |
+| **`System_Documentation.pdf` / `.docx`** | Cover, table of contents, then introduction & purpose, abstract, system design (with architecture diagram), technology stack, dataset introduction, analysis, conclusion of analysis, and project conclusion. |
 
-Regenerate them anytime:
+Regenerate all four anytime:
 
 ```bash
 python docs/generate_docs.py
 ```
+
+> **Word tip:** the `.docx` files include a Table of Contents field — open in Word, then
+> right-click the TOC → **Update Field** to populate page numbers.
+
+**Deployment:** see **[DEPLOYMENT.md](DEPLOYMENT.md)** for step-by-step GitHub push and
+Streamlit Community Cloud deploy flows.
 
 ---
 

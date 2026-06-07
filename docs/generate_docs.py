@@ -19,7 +19,8 @@ if "streamlit" not in sys.modules:
     sys.modules["streamlit"] = st
 
 import pandas as pd
-from modules.docgen import build_analysis_doc, build_system_doc
+from modules.docgen import (build_analysis_doc, build_analysis_docx,
+                            build_system_doc, build_system_docx)
 from modules.datasets import DEFAULT_NAME
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -30,15 +31,16 @@ def main():
     df = pd.read_csv(DATA)
     name = DEFAULT_NAME
 
-    analysis = build_analysis_doc(df, name)
-    apath = os.path.join(HERE, "Analysis_Documentation.pdf")
-    open(apath, "wb").write(analysis)
-    print(f"Wrote {apath} ({len(analysis):,} bytes)")
-
-    system = build_system_doc(df, name)
-    spath = os.path.join(HERE, "System_Documentation.pdf")
-    open(spath, "wb").write(system)
-    print(f"Wrote {spath} ({len(system):,} bytes)")
+    outputs = {
+        "Analysis_Documentation.pdf": build_analysis_doc(df, name),
+        "Analysis_Documentation.docx": build_analysis_docx(df, name),
+        "System_Documentation.pdf": build_system_doc(df, name),
+        "System_Documentation.docx": build_system_docx(df, name),
+    }
+    for fname, data in outputs.items():
+        path = os.path.join(HERE, fname)
+        open(path, "wb").write(data)
+        print(f"Wrote {path} ({len(data):,} bytes)")
 
 
 if __name__ == "__main__":
