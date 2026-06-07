@@ -31,7 +31,7 @@ from modules.ui import (ORANGE, ORANGE_DARK, ORANGE_SOFT, ORANGE_LINE, INK, MUTE
                         APP_NAME, AUTHOR_NAME, AUTHOR_ID)
 from modules.descriptive import describe_all
 from modules.frequency import categorical_frequency
-from modules.normality import normality_report
+from modules.normality import normality_report, qq_data
 from modules.regression import simple_linear_regression
 from modules.tests import independent_ttest, effect_label_d
 
@@ -45,6 +45,7 @@ def PROB(text):     return ("problem", text)
 def FIG(png, frac=0.82): return ("figure", png, frac)
 def CAP(text):      return ("caption", text)
 def TBL(df):        return ("table", df)
+def CODE(text):     return ("code", text.strip("\n"))
 
 
 def SEC(title, *blocks):
@@ -288,143 +289,476 @@ def build_analysis_model(df, name):
     return meta, sections
 
 
+def _feature(title, purpose, inputs, methods, outputs, module):
+    """A granular feature entry: heading + structured bullet list."""
+    return [
+        H2(title),
+        BUL([
+            f"<b>Purpose.</b> {purpose}",
+            f"<b>User inputs / controls.</b> {inputs}",
+            f"<b>Methods & computation.</b> {methods}",
+            f"<b>Outputs.</b> {outputs}",
+            f"<b>Backing module.</b> {module}",
+        ]),
+    ]
+
+
 def build_system_model(df, name):
     numeric, categorical = _numeric(df), _categorical(df)
     target = _pick_target(df, numeric)
+    predictor = None
+    if len(numeric) >= 2 and target:
+        ct = df[numeric].corr()[target].drop(target).abs()
+        predictor = ct.idxmax() if len(ct) else None
     sections = []
 
+    # 1 ── Introduction & purpose
     sections.append(SEC(
         "1. Introduction & Purpose",
         H2("1.1  About this document"),
         P("This document describes the design and implementation of <b>Smart Analysis "
-          "Reporter</b>, a web-based statistical analysis and reporting toolkit. It is intended "
-          "for evaluators and future maintainers, and explains what the system does, how it is "
-          "built, the technologies it uses, and the results it produces on its demonstration "
-          "dataset."),
+          "Reporter</b>, a web-based statistical analysis and reporting toolkit. Its focus is "
+          "the <b>toolkit itself</b> — what each feature does, how a user drives it, what it "
+          "computes, and the software design behind it. The statistical findings for the "
+          "demonstration dataset are reported separately in the companion <i>Analysis "
+          "Documentation</i>."),
         H2("1.2  Problem the system solves"),
         PROB("Producing a statistical report normally means repeating the same manual steps — "
              "loading data, running tests, making charts, writing up findings — for every "
-             "dataset. Smart Analysis Reporter automates that pipeline: it analyses a dataset "
-             "and assembles an editable, exportable analytics report with minimal effort."),
-        H2("1.3  Scope"),
-        BUL(["Interactive exploration: profiling, descriptive statistics, frequency tables, "
-             "Q-Q plots, correlation, hypothesis testing and regression.",
-             "Automated reporting: one-click report generation with editable narrative.",
-             "Export: PDF, Word and HTML deliverables."]),
+             "dataset. Smart Analysis Reporter packages those steps into reusable tools and a "
+             "report engine, so analysis and reporting become repeatable and fast."),
+        H2("1.3  Intended audience"),
+        BUL(["Evaluators assessing the toolkit's capabilities and engineering.",
+             "Future maintainers extending the analysis modules or adding features.",
+             "Analysts who want to understand exactly what each tool computes."]),
+        H2("1.4  Document map"),
+        P("Section 2 gives an abstract; Section 3 covers the system architecture and data "
+          "flow; Section 4 the technology stack; Section 5 the codebase and module design; "
+          "Section 6 is a granular catalogue of every feature; Section 7 details the report "
+          "generation subsystem; Section 8 introduces the bundled demonstration dataset; and "
+          "Section 9 concludes with future work."),
     ))
 
+    # 2 ── Abstract
     sections.append(SEC(
         "2. Abstract",
-        P(f"Smart Analysis Reporter loads a dataset, runs a battery of descriptive and "
-          f"inferential analyses, and assembles an editable analytics report that exports to "
-          f"PDF, Word and HTML. This document demonstrates the system on the <b>{name}</b> "
-          f"dataset ({len(df):,} rows × {df.shape[1]} columns), whose objective is to "
-          f"understand and predict student exam performance. The toolkit is organised as a "
-          f"layered, modular Python application with a Streamlit front end and a dedicated "
-          f"report engine."),
+        P("Smart Analysis Reporter is a layered, modular Python application with a Streamlit "
+          "multipage front end and a dedicated report engine. It provides nine interactive "
+          "analysis tools — data profiling, descriptive statistics, frequency tables, Q-Q "
+          "normality plots, correlation, hypothesis testing, regression, time series — plus a "
+          "report builder that turns any analysis into an editable, exportable document "
+          "(PDF, Word, HTML). Analysis logic lives in pure-Python modules independent of the "
+          "UI, which keeps the system testable, reusable and easy to extend."),
     ))
 
+    # 3 ── System architecture & design
     sections.append(SEC(
-        "3. System Design",
-        H2("3.1  Architecture"),
-        P("The application follows a layered, modular design with a clear separation of "
-          "concerns. A thin data layer caches the dataset; pure-Python analysis modules "
-          "implement the statistics independently of the UI; a Streamlit multipage front end "
-          "exposes them interactively; and a report engine converts any analysis into "
-          "embeddable charts, tables and narrative."),
+        "3. System Architecture & Design",
+        H2("3.1  Architectural overview"),
+        P("The application is organised in four layers with a strict separation of concerns: "
+          "a <b>data layer</b> that loads and caches the dataset; an <b>analysis layer</b> of "
+          "pure-Python modules that implement the statistics; a <b>presentation layer</b> of "
+          "Streamlit pages; and a <b>reporting layer</b> that renders charts and exports "
+          "documents. Pages never contain statistical logic — they call modules — which means "
+          "the same functions power both the interactive app and the generated documentation."),
         FIG(architecture_png()),
         CAP("Figure 3.1 — System architecture and data flow."),
-        H2("3.2  Data flow"),
-        BUL(["The dataset is loaded once into session state and shared across all pages.",
-             "Each analysis page calls the relevant module and renders interactive Plotly charts.",
-             "An “Add to report” action captures any chart/table plus an auto-written inference.",
-             "The auto-report builder chains the modules to assemble a full report in one click.",
-             "The report engine renders themed Matplotlib images and exports PDF / DOCX / HTML."]),
-        H2("3.3  Design principles"),
-        BUL(["Modularity — analysis logic lives in importable modules, not in the UI.",
-             "Reusability — the same chart and inference helpers power the app and these documents.",
-             "Portability — the dataset is cached in-repo so the deployed app needs no credentials."]),
+        H2("3.2  Runtime data flow"),
+        BUL(["On first load, the dataset is read once and stored in Streamlit "
+             "<i>session state</i> (key <b>df</b>), shared across every page.",
+             "Selecting a page runs its script: it reads <b>df</b>, calls the relevant analysis "
+             "module, and renders interactive Plotly charts and tables.",
+             "An “➕ Add to report” control renders a themed Matplotlib image of the current "
+             "output, writes an auto-generated inference, and appends an item to the report "
+             "state (key <b>report</b>).",
+             "The Report Builder reads that state for editing; the export engine serialises it "
+             "to PDF / DOCX / HTML."]),
+        H2("3.3  State management"),
+        P("Two objects in session state hold all cross-page state: <b>df</b> (the active "
+          "dataset) and <b>report</b> (a dictionary of a <i>cover</i> plus an ordered list of "
+          "<i>items</i>). Because Streamlit re-runs a page top-to-bottom on every interaction, "
+          "test results are also stashed in session state so they survive re-runs and remain "
+          "available to add to the report."),
+        H2("3.4  Design principles"),
+        BUL(["<b>Modularity</b> — statistics live in importable modules, not in page scripts.",
+             "<b>Reusability</b> — chart renderers and inference builders are shared by the app, "
+             "the report engine and these documents.",
+             "<b>Portability</b> — the demonstration dataset is cached in-repo, so the deployed "
+             "app needs no external credentials.",
+             "<b>Separation of UI and logic</b> — enabling headless testing of every module."]),
     ))
 
+    # 4 ── Technology stack
     stack = pd.DataFrame({
         "Technology": ["Streamlit", "pandas, NumPy", "SciPy, statsmodels", "Plotly",
-                       "Matplotlib", "ReportLab, python-docx", "kagglehub"],
-        "Purpose": ["Multipage interactive web app & widgets",
-                    "Data handling and vectorised computation",
-                    "Statistical tests, distributions, OLS regression",
-                    "Interactive on-screen charts",
-                    "Themed images embedded in exported documents",
-                    "PDF and Word document generation",
-                    "Fetching the demonstration dataset"],
+                       "Matplotlib", "ReportLab", "python-docx", "kagglehub"],
+        "Role in the toolkit": [
+            "Multipage interactive web UI, widgets and session state",
+            "Data structures and vectorised computation",
+            "Statistical tests, distributions and OLS / ARIMA models",
+            "Interactive on-screen charts",
+            "Themed static charts embedded in exported documents",
+            "PDF report and documentation generation",
+            "Editable Word (.docx) generation",
+            "Fetching / caching the demonstration dataset"],
     }, index=["UI", "Computation", "Statistics", "Interactive charts",
-              "Report charts", "Export", "Data source"])
+              "Report charts", "PDF export", "Word export", "Data source"])
     stack.index.name = "Layer"
     sections.append(SEC(
         "4. Technology Stack",
-        P("The toolkit is built entirely in Python with the following components:"),
+        P("The toolkit is built entirely in Python. Each dependency maps to a clear role:"),
         TBL(stack),
     ))
 
+    # 5 ── Codebase & module design
+    modmap = pd.DataFrame({"Responsibility": [
+        "Home page — dataset loading, overview, one-click report trigger",
+        "Theme (white/orange), page header, KPI cards, Plotly template",
+        "Cached loader for the default demonstration dataset",
+        "File upload parsing and Metric/Ordinal/Nominal column classification",
+        "Dataset summary and per-column profiling",
+        "Summary statistics (centre, spread, shape)",
+        "Categorical and grouped-metric frequency tables",
+        "Q-Q plotting positions and Shapiro-Wilk normality",
+        "Pearson / Spearman / Kendall correlation matrices",
+        "t-tests, ANOVA, chi-square, Z-tests and effect sizes",
+        "Live test assumption checks (normality, variance, sample size)",
+        "Simple and multiple OLS regression",
+        "Time-series preparation and ARIMA forecast",
+        "Report state, themed chart rendering, PDF/DOCX/HTML export",
+        "One-click full-analysis report builder",
+        "Analysis & System documentation generators",
+    ]}, index=[
+        "app.py", "ui.py", "datasets.py", "data_loader.py", "profiling.py", "descriptive.py",
+        "frequency.py", "normality.py", "correlation.py", "tests.py", "assumptions.py",
+        "regression.py", "timeseries.py", "report.py", "autoreport.py", "docgen.py"])
+    modmap.index.name = "Module"
+    sections.append(SEC(
+        "5. Codebase & Module Design",
+        P("The application is split into a thin set of Streamlit page scripts (in <b>pages/</b>) "
+          "and a library of analysis modules (in <b>modules/</b>). Each module owns one "
+          "responsibility and exposes plain functions that take a pandas object and return "
+          "numbers, data frames or chart images — never UI. This table maps every module to its "
+          "responsibility:"),
+        TBL(modmap),
+    ))
+
+    # 6 ── Feature catalogue (granular, per tool)
+    feat = [P("This section documents each tool in the toolkit. For every feature it states the "
+              "purpose, the controls the user drives, the methods and statistics computed, the "
+              "outputs produced, and the module that implements it.")]
+
+    feat += _feature(
+        "6.1  Home & Data Loading",
+        "Entry point of the app; makes a dataset available to every other tool and offers a "
+        "one-click report.",
+        "Upload a CSV/Excel file, or use the bundled default dataset; reset to default.",
+        "Files are parsed with pandas (read_csv / read_excel); columns are classified as "
+        "Metric, Ordinal (low-cardinality integers) or Nominal by a dtype + cardinality "
+        "heuristic. The dataset is held in session state and cached.",
+        "KPI cards (rows, columns, missing, duplicates), a data preview, a column-type table, "
+        "and an “Auto-generate report” button.",
+        "modules/datasets.py, modules/data_loader.py (app.py)")
+
+    feat += _feature(
+        "6.2  Data Profiler",
+        "A one-glance data-quality and structure report.",
+        "None — operates on the loaded dataset.",
+        "Computes row/column counts, total missing values and duplicate rows; per column it "
+        "reports dtype, missing percentage, unique count and measurement level.",
+        "KPI cards plus a merged profile table (dtype + measurement level) and a preview.",
+        "modules/profiling.py, modules/data_loader.py")
+
+    feat += _feature(
+        "6.3  Descriptive Statistics",
+        "Summarise the centre, spread and shape of each metric variable.",
+        "A variable selector to inspect one column in detail.",
+        "Mean, median, mode, variance, standard deviation, min/max/range, quartiles and IQR, "
+        "plus skewness and kurtosis (pandas / SciPy). A fitted normal curve is overlaid on the "
+        "histogram.",
+        "A summary table for all metric variables, KPI cards, a histogram with normal overlay, "
+        "and a box plot.",
+        "modules/descriptive.py")
+    if target:
+        feat += [FIG(R.hist_png(df[target], title=f"Distribution of {target}"), 0.66),
+                 CAP("Figure 6.1 — Example output of the Descriptive tool: histogram with "
+                     "fitted normal curve.")]
+
+    feat += _feature(
+        "6.4  Frequency Tables",
+        "Show how often each category or binned value occurs.",
+        "A categorical variable, or a metric variable with a bin-count slider.",
+        "Absolute, relative (%) and cumulative-(%) frequencies via value counts; metric "
+        "variables are binned with equal-width intervals (pd.cut).",
+        "A frequency table and an accompanying bar chart.",
+        "modules/frequency.py")
+
+    feat += _feature(
+        "6.5  Q-Q Plot & Normality",
+        "Test whether a variable is normally distributed — a key assumption for parametric tests.",
+        "A metric variable.",
+        "Blom plotting positions are compared against theoretical normal quantiles "
+        "(SciPy norm.ppf) with a Q1–Q3 reference line; a Shapiro-Wilk test and skewness / "
+        "kurtosis quantify the departure from normality.",
+        "A Q-Q plot, a histogram with normal curve, the W statistic and p-value, KPI cards and "
+        "a plain-language verdict.",
+        "modules/normality.py")
+    if target:
+        qq = qq_data(df[target])
+        if qq is not None:
+            feat += [FIG(R.qq_png(qq["theoretical"], qq["sample"], qq["ref_x"], qq["ref_y"]), 0.66),
+                     CAP("Figure 6.2 — Example output of the Q-Q tool: sample quantiles against "
+                         "the normal reference line.")]
+
+    feat += _feature(
+        "6.6  Correlation",
+        "Measure the linear association between every pair of metric variables.",
+        "A correlation method — Pearson, Spearman or Kendall.",
+        "The full correlation matrix is computed and rendered as a colour heatmap; the "
+        "strongest pair is summarised automatically.",
+        "A correlation-matrix table, a heatmap, and an auto-written interpretation.",
+        "modules/correlation.py")
+
+    feat += _feature(
+        "6.7  Hypothesis Testing",
+        "Decide whether observed differences or associations are statistically significant "
+        "(α = 0.05).",
+        "Choice of test (one-sample t, Welch independent t, paired t, ANOVA, chi-square, "
+        "one- and two-sample Z); the relevant variables, hypothesised mean μ₀ and σ.",
+        "Tests use SciPy; the independent t-test applies Welch's correction; effect sizes "
+        "(Cohen's d, Cramér's V) and 95% confidence intervals are reported. A <b>live "
+        "assumption engine</b> checks normality (Shapiro-Wilk), equal variances (Levene), "
+        "sample-size adequacy (CLT) and expected-cell counts, shown as pass / review flags "
+        "before the test is run.",
+        "Test statistic, p-value, effect size, contingency table (chi-square) and a "
+        "plain-language verdict; results persist across re-runs and can be added to the report.",
+        "modules/tests.py, modules/assumptions.py")
+
+    feat += _feature(
+        "6.8  Regression",
+        "Quantify and model how predictors relate to an outcome.",
+        "Simple linear: an X (predictor) and Y (outcome). Multiple OLS: a dependent variable "
+        "and several independent variables.",
+        "Ordinary-least-squares fitting via statsmodels; the simple model reports intercept, "
+        "slope, R² and the slope's p-value, and draws the fitted line; multiple OLS returns the "
+        "full regression summary.",
+        "The fitted equation, KPI cards, an R² indicator, a scatter-plus-fit chart, and the OLS "
+        "summary table.",
+        "modules/regression.py")
+    if target and predictor:
+        rr = simple_linear_regression(df, predictor, target)
+        if rr:
+            feat += [FIG(R.regression_png(rr["x"], rr["y"], rr["x_line"], rr["y_line"],
+                                          xlabel=predictor, ylabel=target,
+                                          title=f"{target} vs {predictor}"), 0.66),
+                     CAP("Figure 6.3 — Example output of the Regression tool: data with the "
+                         "fitted least-squares line.")]
+
+    feat += _feature(
+        "6.9  Time Series",
+        "Reveal a trend and produce a short forecast for date-bearing data.",
+        "A date column and a value column.",
+        "Dates are parsed, sorted and indexed; an ARIMA(1,1,1) model produces a 30-step "
+        "forecast (statsmodels). The tool gracefully reports when the dataset has no date "
+        "column.",
+        "A trend line chart and a forecast table.",
+        "modules/timeseries.py")
+
+    sections.append(SEC("6. Feature Catalogue", *feat))
+
+    # 7 ── Report generation subsystem
+    sections.append(SEC(
+        "7. Report Generation Subsystem",
+        P("The reporting layer is what makes the toolkit a <i>reporter</i>. It is built around a "
+          "single state object and a set of renderers."),
+        H2("7.1  Report state model"),
+        P("The report is a dictionary held in session state with two parts: a <b>cover</b> "
+          "(title, subtitle, author, ID, date and an editable executive summary) and an ordered "
+          "list of <b>items</b>. Each item carries an id, a title, an editable inference, an "
+          "optional chart image (PNG) and an optional table (data frame)."),
+        H2("7.2  Add-to-report (incremental capture)"),
+        P("Every analysis page exposes an “➕ Add to report” control. When used, the toolkit "
+          "renders a themed Matplotlib image of the current chart, generates a one-sentence "
+          "inference from the underlying statistics, and appends an item (de-duplicated by "
+          "title). The user thus assembles a report while exploring."),
+        H2("7.3  Auto-report (one-click)"),
+        P("The auto-report builder chains the analysis modules to produce a complete report in "
+          "one click — dataset overview, descriptive statistics, target distribution, spread "
+          "and outliers, correlation, best-predictor regression, a categorical breakdown, a "
+          "group comparison test and a normality check — each with an auto-written inference."),
+        H2("7.4  Report Builder page"),
+        BUL(["Edit the cover — title, subtitle, author, ID, date and executive summary.",
+             "Edit each section's inference in place; reorder (↑/↓) or remove (✕) sections.",
+             "Preview the orange cover banner live before exporting."]),
+        H2("7.5  Export engine"),
+        P("A single report model is serialised three ways: a paginated <b>PDF</b> (ReportLab) "
+          "with an orange cover and embedded charts/tables; an editable <b>Word</b> document "
+          "(python-docx); and a self-contained <b>HTML</b> file with base64-embedded images. "
+          "The same renderers power these companion documentation files.",),
+        H2("7.6  Backing modules"),
+        P("modules/report.py (state, chart rendering, exporters), modules/autoreport.py "
+          "(one-click builder), modules/docgen.py (these documents)."),
+    ))
+
+    # 8 ── Demonstration dataset (brief — analysis is separate)
     cols = pd.DataFrame({
         "Type": ["Categorical" if c in categorical else "Metric" for c in df.columns],
         "Example": [str(df[c].iloc[0]) for c in df.columns],
         "Unique": [int(df[c].nunique()) for c in df.columns],
     }, index=list(df.columns))
     cols.index.name = "Column"
-    ds_blocks = [
-        P(f"The <b>{name}</b> dataset contains {len(df):,} student records with {df.shape[1]} "
-          f"variables ({len(numeric)} metric, {len(categorical)} categorical) and "
-          f"{int(df.isna().sum().sum())} missing values. The target variable is <b>{target}</b>. "
-          "The full schema is:"),
+    sections.append(SEC(
+        "8. Demonstration Dataset",
+        P(f"So the toolkit works out of the box, it bundles the <b>{name}</b> dataset "
+          f"({len(df):,} rows × {df.shape[1]} columns, target <b>{target}</b>). It is used here "
+          f"only to illustrate the features — the full statistical study of this data is "
+          f"presented in the companion <i>Analysis Documentation</i>. The schema is:"),
         TBL(cols),
-    ]
-    if target:
-        ds_blocks += [FIG(R.hist_png(df[target], title=f"Distribution of {target}"), 0.7),
-                      CAP(f"Figure 5.1 — Distribution of the target variable, {target}.")]
-    sections.append(SEC("5. Dataset Introduction", *ds_blocks))
-
-    an_blocks = [P("The toolkit applies descriptive statistics, frequency analysis, normality "
-                   "checks (Q-Q plot + Shapiro-Wilk), correlation, hypothesis tests (t-tests, "
-                   "ANOVA, chi-square, Z-tests) with live assumption checks, and linear "
-                   "regression. Two representative outputs are shown below.")]
-    if len(numeric) >= 2:
-        an_blocks += [FIG(R.heatmap_png(df[numeric].corr())),
-                      CAP("Figure 6.1 — Correlation matrix of the metric variables.")]
-        if target:
-            ct = df[numeric].corr()[target].drop(target).abs()
-            if len(ct):
-                p = ct.idxmax()
-                r = simple_linear_regression(df, p, target)
-                if r:
-                    an_blocks += [FIG(R.regression_png(r["x"], r["y"], r["x_line"], r["y_line"],
-                                                       xlabel=p, ylabel=target,
-                                                       title=f"{target} vs {p}")),
-                                  CAP(f"Figure 6.2 — Linear regression of {target} on {p}.")]
-    sections.append(SEC("6. Analysis", *an_blocks))
-
-    sections.append(SEC(
-        "7. Conclusion of Analysis",
-        P("Applied to the demonstration dataset, the toolkit produced the following "
-          "evidence-based findings:"),
-        BUL(_key_findings(df)),
     ))
 
+    # 9 ── Project conclusion
     sections.append(SEC(
-        "8. Project Conclusion",
-        P(f"Smart Analysis Reporter demonstrates an end-to-end analytics workflow — from raw "
-          f"data, through an interactive toolkit, to a polished and editable report — without "
-          f"hand-coding each study. Its modular structure means new analyses or datasets can be "
-          f"added with minimal change, and its one-click reporting makes findings immediately "
-          f"shareable. The {name} case study shows the toolkit producing a complete, defensible "
-          f"statistical narrative automatically."),
-        H2("8.1  Future work"),
-        BUL(["Multiple-regression and classification models for richer prediction.",
+        "9. Project Conclusion",
+        P("Smart Analysis Reporter packages a complete analytics workflow — from raw data, "
+          "through a suite of interactive statistical tools, to a polished and editable report "
+          "— behind a clean white-and-orange interface. Its layered design keeps statistics, "
+          "UI and reporting independent, so new analyses, datasets or export formats can be "
+          "added with minimal change, and every module can be tested headlessly."),
+        H2("9.1  Future work"),
+        BUL(["Multiple-regression and classification tools with model diagnostics.",
              "Automated outlier and data-quality reporting.",
-             "User accounts and saved report templates."]),
+             "Saved report templates and user accounts.",
+             "Additional export themes and chart types."]),
     ))
 
-    meta = {"title": "System Documentation", "doc_kind": "Technical & System Report",
+    meta = {"title": "System Documentation", "doc_kind": "Toolkit & System Design Report",
             "subtitle": name}
+    return meta, sections
+
+
+# ═══════════════════ DEPLOYMENT GUIDE MODEL ═══════════════════
+
+REPO_URL = "https://github.com/TejalMenezes/analysis-toolkit-v1"
+
+
+def build_deploy_model(repo_url=REPO_URL):
+    repo_git = repo_url + ".git"
+    sections = []
+
+    sections.append(SEC(
+        "1. Overview",
+        P("This guide explains how to publish <b>Smart Analysis Reporter</b> as a live, public "
+          "web application. It is organised as two independent process flows:"),
+        BUL(["<b>Flow A — Push the project to GitHub.</b>",
+             "<b>Flow B — Deploy from GitHub to a public link</b> (Streamlit Community Cloud)."]),
+        P(f"Target repository: <b>{repo_url}</b> (branch <b>main</b>)."),
+        H2("1.1  Pre-flight checklist"),
+        P("These are already prepared in the project:"),
+        BUL(["requirements.txt lists every dependency.",
+             ".gitignore excludes the virtual environment, caches, logs and local settings.",
+             "The default dataset is committed at data/student_dataset.csv, so the deployed app "
+             "needs no Kaggle login.",
+             "The application entry point is app.py.",
+             "The Git repository is initialised and committed locally."]),
+    ))
+
+    sections.append(SEC(
+        "2. Flow A — Push to GitHub",
+        P("Run these commands from the project root. They point the local repository at GitHub "
+          "and upload the code."),
+        CODE("# 1. point the local repo at your GitHub repo (once)\n"
+             f"git remote add origin {repo_git}\n\n"
+             "# 2. make sure you are on main\n"
+             "git branch -M main\n\n"
+             "# 3. stage and commit any pending changes\n"
+             "git add .\n"
+             'git commit -m "Smart Analysis Reporter"\n\n'
+             "# 4. push\n"
+             "git push -u origin main"),
+        H2("2.1  If the remote already exists"),
+        P("If Git reports “remote origin already exists”, update its URL instead:"),
+        CODE(f"git remote set-url origin {repo_git}\n"
+             "git push -u origin main"),
+        H2("2.2  Authentication"),
+        P("GitHub no longer accepts your account password on the command line — use a "
+          "<b>Personal Access Token (PAT)</b>:"),
+        BUL(["In GitHub, go to Settings → Developer settings → Personal access tokens → "
+             "Tokens (classic).",
+             "Generate a new token with the <b>repo</b> scope and copy it.",
+             "When <i>git push</i> asks for a password, paste the token.",
+             "Alternatively, use GitHub Desktop or the GitHub CLI (gh auth login), which "
+             "handle authentication for you."]),
+        P("<b>Note on multiple accounts.</b> If the machine has cached credentials for a "
+          "different GitHub account, the push will be rejected with a 403 error. Clear the "
+          "stored credential (Windows Credential Manager → remove the github.com entry) or "
+          "push using a token for the correct account."),
+        H2("2.3  Verify"),
+        P(f"Refresh {repo_url} in your browser — all the project files should now appear."),
+    ))
+
+    sections.append(SEC(
+        "3. Flow B — Deploy to a Public Link",
+        P("Once the repository is on GitHub, Streamlit Community Cloud builds and hosts the app "
+          "for free — there is no server to manage."),
+        H2("3.1  Steps"),
+        BUL(["Go to https://share.streamlit.io and sign in with GitHub (authorise repo access).",
+             "Click “Create app” → “Deploy a public app from GitHub.”",
+             "Repository: <b>TejalMenezes/analysis-toolkit-v1</b>; Branch: <b>main</b>; "
+             "Main file path: <b>app.py</b>.",
+             "Click “Deploy.”",
+             "Wait for the first build — it installs requirements.txt (typically 2–5 minutes; "
+             "the log streams live).",
+             "When the build finishes you receive your public URL, for example "
+             "https://analysis-toolkit-v1.streamlit.app — that is the link to share."]),
+        H2("3.2  After deployment"),
+        BUL(["Every push to main automatically redeploys the app — no extra steps.",
+             "Manage, reboot or view logs from the dashboard at https://share.streamlit.io.",
+             "If a build fails, open the log — it is almost always a missing line in "
+             "requirements.txt."]),
+    ))
+
+    sections.append(SEC(
+        "4. Updating the Live App",
+        P("To publish a change after the app is live, commit and push — Streamlit Cloud detects "
+          "the push and rebuilds automatically."),
+        CODE("git add .\n"
+             'git commit -m "describe your change"\n'
+             "git push"),
+    ))
+
+    trouble = pd.DataFrame({"Resolution": [
+        "Run: git remote set-url origin <url>, then push.",
+        "Run: git pull --rebase origin main, then git push.",
+        "Use a Personal Access Token as the password (see Section 2.2).",
+        "Add the missing package to requirements.txt, commit and push.",
+        "Confirm data/student_dataset.csv is committed (it is, by default).",
+    ]}, index=[
+        "remote origin already exists",
+        "Push rejected (non-fast-forward)",
+        "Authentication fails on push",
+        "Cloud build fails on an import",
+        "App loads but reports no dataset"])
+    trouble.index.name = "Symptom"
+    sections.append(SEC(
+        "5. Troubleshooting",
+        P("Common issues and how to resolve them:"),
+        TBL(trouble),
+    ))
+
+    sections.append(SEC(
+        "6. Quick Temporary Link",
+        P("If you only need a public link for a short demo from your own machine (it lives only "
+          "while the command runs), expose the local app with a tunnel:"),
+        CODE("# terminal 1\n"
+             "streamlit run app.py\n\n"
+             "# terminal 2\n"
+             "pip install pyngrok\n"
+             'python -c "from pyngrok import ngrok; print(ngrok.connect(8501))"'),
+        P("For a permanent link, use Flow B instead."),
+    ))
+
+    meta = {"title": "Deployment Guide", "doc_kind": "Deployment Process Flow",
+            "subtitle": "Smart Analysis Reporter"}
     return meta, sections
 
 
@@ -475,12 +809,27 @@ def _pb_box(text):
     return t
 
 
+def _code_box(text):
+    from reportlab.platypus import Preformatted
+    code_style = ParagraphStyle("Code", fontName="Courier", fontSize=8.5, leading=11.5,
+                                textColor=HexColor("#1F2430"))
+    t = Table([[Preformatted(text, code_style)]], colWidths=[_AVAIL_W])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), HexColor("#F4F4F6")),
+        ("BOX", (0, 0), (-1, -1), 0.5, HexColor("#E2E2E8")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    return t
+
+
 def _pdf_block(b):
     kind = b[0]
     if kind == "h2":      return _PS_para(b[1], "h2")
     if kind == "para":    return _PS_para(b[1], "body")
     if kind == "caption": return _PS_para(b[1], "cap")
     if kind == "problem": return _pb_box(b[1])
+    if kind == "code":    return _code_box(b[1])
     if kind == "figure":  return R._rl_image(b[1], _AVAIL_W * b[2])
     if kind == "table":   return R._rl_table(b[1], _AVAIL_W)
     if kind == "bullets":
@@ -663,6 +1012,16 @@ def render_docx(meta, sections):
             elif kind == "caption":
                 p = doc.add_paragraph(); rr = p.add_run(b[1]); rr.italic = True
                 rr.font.size = Pt(8.5); rr.font.color.rgb = GREY
+            elif kind == "code":
+                cp = doc.add_paragraph(); _shade(cp._p.get_or_add_pPr(), "F4F4F6")
+                cp.paragraph_format.space_before = Pt(4); cp.paragraph_format.space_after = Pt(4)
+                lines = b[1].split("\n")
+                for li, line in enumerate(lines):
+                    if li:
+                        cp.add_run().add_break()
+                    rc = cp.add_run(line)
+                    rc.font.name = "Consolas"; rc.font.size = Pt(8.5)
+                    rc.font.color.rgb = RGBColor(0x1F, 0x24, 0x30)
             elif kind == "bullets":
                 for item in b[1]:
                     _docx_runs(doc.add_paragraph(style="List Bullet"), item)
@@ -733,4 +1092,14 @@ def build_system_doc(df, name):
 
 def build_system_docx(df, name):
     meta, sections = build_system_model(df, name)
+    return render_docx(meta, sections)
+
+
+def build_deploy_doc():
+    meta, sections = build_deploy_model()
+    return render_pdf(meta, sections)
+
+
+def build_deploy_docx():
+    meta, sections = build_deploy_model()
     return render_docx(meta, sections)

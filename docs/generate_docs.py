@@ -20,7 +20,8 @@ if "streamlit" not in sys.modules:
 
 import pandas as pd
 from modules.docgen import (build_analysis_doc, build_analysis_docx,
-                            build_system_doc, build_system_docx)
+                            build_system_doc, build_system_docx,
+                            build_deploy_doc, build_deploy_docx)
 from modules.datasets import DEFAULT_NAME
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -36,6 +37,8 @@ def main():
         "Analysis_Documentation.docx": build_analysis_docx(df, name),
         "System_Documentation.pdf": build_system_doc(df, name),
         "System_Documentation.docx": build_system_docx(df, name),
+        "Deployment_Guide.pdf": build_deploy_doc(),
+        "Deployment_Guide.docx": build_deploy_docx(),
     }
     for fname, data in outputs.items():
         path = os.path.join(HERE, fname)

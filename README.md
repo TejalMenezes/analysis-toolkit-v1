@@ -100,7 +100,8 @@ Generated documentation lives in [`docs/`](docs/), in **both PDF and Word (.docx
 | File | Contents |
 |------|----------|
 | **`Analysis_Documentation.pdf` / `.docx`** | A guided statistical study — cover, table of contents, then sections (each on its own page) with a problem statement, method, figure/table and interpretation for (1) descriptive stats, (2) categorical testing, (3) correlation, (4) predictive/linear-regression trends, and (5) a synthesis. |
-| **`System_Documentation.pdf` / `.docx`** | Cover, table of contents, then introduction & purpose, abstract, system design (with architecture diagram), technology stack, dataset introduction, analysis, conclusion of analysis, and project conclusion. |
+| **`System_Documentation.pdf` / `.docx`** | The toolkit itself: introduction & purpose, abstract, system architecture & design, technology stack, codebase/module design, a granular **feature catalogue** (every tool's purpose, inputs, methods, outputs and backing module), the report-generation subsystem, the demonstration dataset, and conclusions. |
+| **`Deployment_Guide.pdf` / `.docx`** | Step-by-step process flows for pushing to GitHub and deploying a public link on Streamlit Community Cloud, with commands and troubleshooting. |
 
 Regenerate all four anytime:
 

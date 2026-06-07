@@ -24,7 +24,8 @@
       "Bash(git symbolic-ref *)",
       "Bash(git config *)",
       "Bash(git rm *)",
-      "Bash(echo \"pid $!\")"
+      "Bash(echo \"pid $!\")",
+      "Bash(./venv/Scripts/python.exe -m py_compile modules/docgen.py docs/generate_docs.py)"
     ]
   }
 }
